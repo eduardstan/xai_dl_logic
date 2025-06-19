@@ -1,0 +1,43 @@
+data:
+  calculate_probabilities: false
+  min_topic_size: 10
+  nr_topics: auto
+  text_fields:
+  - abstract
+  - title
+  - keywords
+embedding_model:
+  batch_size: 64
+  device: auto
+  name: all-MiniLM-L6-v2
+  show_progress: true
+hdbscan_params:
+  cluster_selection_method: eom
+  metric: euclidean
+  min_cluster_size: 15
+  min_samples: 5
+  prediction_data: true
+model_version: 0.17.0
+output:
+  cache_dir: cache
+  cache_embeddings: true
+  models_dir: models
+  plots_dir: plots
+  results_dir: results
+  save_embeddings: true
+  save_model: true
+  save_topics: true
+random_seed: 42
+timestamp_format: '%Y%m%d_%H%M%S'
+umap_params:
+  metric: cosine
+  min_dist: 0.0
+  n_components: 5
+  n_neighbors: 15
+  random_state: 42
+visualization:
+  hide_document_hover: false
+  interactive_datamapplot: true
+  plot_format: html
+  reduce_embeddings_for_viz: true
+  save_plots: true

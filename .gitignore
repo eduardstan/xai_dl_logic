@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Conda environments
+.conda/
+
+# Cache directories
+cache/
+__pycache__/
+.cache/
+
+# Large model files (but keep directory structure)
+bertopic_analysis/models/*.pkl
+bertopic_analysis/models/*.joblib
+bertopic_analysis/models/*.bin
+
+# Large embedding files
+*.npy
+embeddings_*.pkl
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Large result files (optional - keep structure but not huge files)
+results/*.png
+results/*.html
+bertopic_analysis/plots/*.html 

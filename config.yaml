@@ -1,0 +1,104 @@
+# BERTopic Analysis Configuration
+# Project: XAI Deep Learning Logic Bibliography Analysis
+
+# Model Configuration
+embedding_model:
+  name: "all-MiniLM-L6-v2"  # Fast and efficient for academic texts
+  batch_size: 64  # Will auto-adjust based on available device
+  show_progress: true
+  device: "auto"  # Auto-detect best available device (cuda/cpu)
+
+umap_params:
+  n_neighbors: 15
+  n_components: 5
+  min_dist: 0.0
+  metric: "cosine"
+  random_state: 42
+
+hdbscan_params:
+  min_cluster_size: 15
+  min_samples: 5
+  metric: "euclidean"
+  cluster_selection_method: "eom"
+  prediction_data: true  # Enable prediction data for probabilities
+
+# Visualization Configuration
+visualization:
+  hide_document_hover: false  # Allow hovering to see document content
+  reduce_embeddings_for_viz: true
+  interactive_datamapplot: true
+  save_plots: true
+  plot_format: "html"
+
+# Data Processing
+data:
+  min_topic_size: 10
+  nr_topics: "auto"  # Let BERTopic determine optimal number
+  calculate_probabilities: false  # Temporarily disable to avoid HDBSCAN prediction error
+  text_fields:
+    - "abstract"
+    - "title"
+    - "keywords"
+
+# Output Configuration
+output:
+  results_dir: "results"
+  models_dir: "models"
+  plots_dir: "plots"
+  save_model: true
+  save_embeddings: true
+  save_topics: true
+  cache_embeddings: true  # Cache embeddings to avoid recomputation
+  cache_dir: "cache"
+
+# Systematic Review Configuration
+systematic_review:
+  # Paper selection strategy
+  selection_strategy: "diverse_representative"  # Options: "centroid_based", "diverse_representative"
+  
+  # Selection method type: "threshold_based" or "ratio_based"
+  selection_strategy_type: "ratio_based"  # Options: "threshold_based", "ratio_based"
+  
+  # Threshold-based selection parameters (original method)
+  # Dynamic paper selection based on cluster size
+  base_papers_per_cluster: 4  # Minimum papers per cluster
+  max_papers_per_cluster: 200   # Maximum papers per cluster
+  
+  # Cluster size thresholds for paper selection
+  cluster_thresholds:
+    small: 20    # <= 20 papers: select base_papers_per_cluster
+    medium: 40   # 21-40 papers: select base_papers_per_cluster + 1
+    large: 80    # 41-80 papers: select base_papers_per_cluster + 2
+    xlarge: 150  # 81-150 papers: select base_papers_per_cluster + 3
+    xxlarge: 300 # 151-300 papers: select base_papers_per_cluster + 4
+    # >300 papers: select max_papers_per_cluster (change the above variable to 10)
+  
+  # Ratio-based selection parameters (new method)
+  # Selects approximately the same percentage from each cluster
+  target_selection_ratio: 0.15  # Select ~15% of papers from each cluster
+  min_papers_per_cluster: 2     # Minimum papers even for small clusters
+  
+  # Diversity selection parameters
+  diversity_weight: 0.75  # Balance between centrality (0.0) and diversity (1.0)
+  similarity_threshold: 0.8  # Minimum similarity for paper assignment
+  min_diversity_threshold: 0.25  # Minimum diversity score to consider a paper
+  use_iterative_selection: true  # Use iterative optimization instead of greedy
+  selection_iterations: 10 # Number of optimization iterations
+  
+  # Metrics to compute for each paper
+  compute_metrics:
+    - "similarity_to_centroid"
+    - "similarity_to_cluster_papers" 
+    - "diversity_score"
+    - "representativeness_score"
+  
+  # Research focus alignment (using wildcards from original query)
+  research_keywords:
+    xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
+    symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
+    subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
+
+# Reproducibility
+random_seed: 42
+model_version: "0.17.0"
+timestamp_format: "%Y%m%d_%H%M%S" 
