@@ -10,7 +10,7 @@ embedding_model:
 
 umap_params:
   n_neighbors: 15
-  n_components: 5
+  n_components: 15  # Balanced: preserves structure without over-clustering
   min_dist: 0.0
   metric: "cosine"
   random_state: 42
@@ -104,8 +104,17 @@ domain_guidance:
   seed_words:
     enabled: true
     multiplier: 2.0
-    # Single list of domain-relevant terms to boost in topic representations
-    words: ["explainable", "interpretable", "transparent", "symbolic", "logic", "formal", "neural", "deep", "network", "reasoning", "rule", "tree", "forest", "attention", "transformer", "ontology", "knowledge", "embedding", "gradient", "svm", "linear", "ensemble"]
+    # Mix of single words and multi-word phrases for domain concepts
+    words: [
+      # XAI and Interpretability
+      "explainable", "interpretable", "transparent", "explainable ai", "machine learning", "deep learning", "neural network", "artificial intelligence",
+      # Symbolic AI  
+      "symbolic", "logic", "formal", "reasoning", "decision tree", "knowledge graph", "ontology", "rule based", "symbolic reasoning",
+      # Sub-symbolic/Neural
+      "neural", "deep", "network", "transformer", "attention", "embedding", "gradient", "convolutional neural", "recurrent neural",
+      # General ML
+      "tree", "forest", "svm", "linear", "ensemble", "classification", "regression", "clustering"
+    ]
     
   # Future extensions
   guided_topics:
