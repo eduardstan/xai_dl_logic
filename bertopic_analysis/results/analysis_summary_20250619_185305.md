@@ -1,6 +1,6 @@
 
 # BERTopic Analysis Summary Report
-Generated: 2025-06-18 14:26:51
+Generated: 2025-06-19 18:53:05
 
 ## Dataset Overview
 - Total documents processed: 3,364
@@ -16,13 +16,13 @@ Generated: 2025-06-18 14:26:51
 - Min topic size: 10
 
 ## Top 10 Topics by Size
- 0. (891 docs) reasoning, visual, language, question, image
- 1. (174 docs) fuzzy, rules, fuzzy rules, rule, neurofuzzy
- 2. (172 docs) graph, gnns, node, graph neural, graphs
- 3. (171 docs) recommendation, users, user, items, item
- 4. (147 docs) reinforcement, reinforcement learning, agents, policies, policy
+ 0. (891 docs) reasoning, logic, attention, deep, visual
+ 1. (174 docs) fuzzy, rule, rules, deep, fuzzy rules
+ 2. (172 docs) graph, gnns, node, graph neural, embedding
+ 3. (171 docs) recommendation, users, user, explainable, items
+ 4. (147 docs) reinforcement, reinforcement learning, agents, policies, symbolic
  5. (121 docs) medical, clinical, health, patients, risk
- 6. (112 docs) diagnosis, images, segmentation, cancer, brain
+ 6. (112 docs) deep, diagnosis, images, segmentation, cancer
  7. ( 63 docs) students, tracing, knowledge tracing, cognitive, learners
  8. ( 55 docs) clustering, matrix, factorization, cluster, nonnegative
  9. ( 53 docs) latent, generative, latent space, gans, disentangled
