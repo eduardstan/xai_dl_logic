@@ -20,6 +20,7 @@ from bibtexparser.bparser import BibTexParser
 
 # BERTopic and ML imports
 from bertopic import BERTopic
+from bertopic.vectorizers import ClassTfidfTransformer
 from sentence_transformers import SentenceTransformer
 from umap import UMAP
 from hdbscan import HDBSCAN
@@ -220,11 +221,32 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
         max_features=5000
     )
     
+    # Configure ClassTfidfTransformer with seed words if enabled
+    ctfidf_model = None
+    if config.get('domain_guidance', {}).get('seed_words', {}).get('enabled', False):
+        seed_config = config['domain_guidance']['seed_words']
+        seed_words = seed_config.get('words', [])
+        multiplier = seed_config.get('multiplier', 2.0)
+        
+        if seed_words:
+            logger.info(f"🌱 Enabling seed words enhancement with {len(seed_words)} domain terms")
+            logger.info(f"   Multiplier: {multiplier}x for words: {seed_words[:5]}{'...' if len(seed_words) > 5 else ''}")
+            
+            ctfidf_model = ClassTfidfTransformer(
+                seed_words=seed_words,
+                seed_multiplier=multiplier
+            )
+        else:
+            logger.warning("Seed words enabled but no words provided - skipping enhancement")
+    else:
+        logger.info("Seed words enhancement disabled")
+    
     # Initialize BERTopic model
     topic_model = BERTopic(
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
         vectorizer_model=vectorizer_model,
+        ctfidf_model=ctfidf_model,  # Add ClassTfidfTransformer
         calculate_probabilities=config['data']['calculate_probabilities'],
         nr_topics=config['data']['nr_topics'],
         min_topic_size=config['data']['min_topic_size'],

@@ -98,6 +98,24 @@ systematic_review:
     symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
     subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
 
+# Domain Knowledge Injection
+domain_guidance:
+  # Seed words for topic representation enhancement
+  seed_words:
+    enabled: true
+    multiplier: 2.0
+    # Single list of domain-relevant terms to boost in topic representations
+    words: ["explainable", "interpretable", "transparent", "symbolic", "logic", "formal", "neural", "deep", "network", "reasoning", "rule", "tree", "forest", "attention", "transformer", "ontology", "knowledge", "embedding", "gradient", "svm", "linear", "ensemble"]
+    
+  # Future extensions
+  guided_topics:
+    enabled: false
+    # Will be added in Phase 2 if needed
+    
+  representation_models:
+    enabled: false
+    # Will be added if custom representations needed
+
 # Reproducibility
 random_seed: 42
 model_version: "0.17.0"
