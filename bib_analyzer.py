@@ -208,10 +208,18 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
     logger.info("Setting up BERTopic model with custom parameters")
     
     # Configure UMAP for dimensionality reduction
-    umap_model = UMAP(**config['umap_params'])
+    umap_params = config['umap_params'].copy()
+    logger.info(f"UMAP parameters: n_neighbors={umap_params.get('n_neighbors')}, "
+               f"n_components={umap_params.get('n_components')}, "
+               f"min_dist={umap_params.get('min_dist')}")
+    umap_model = UMAP(**umap_params)
     
     # Configure HDBSCAN for clustering
-    hdbscan_model = HDBSCAN(**config['hdbscan_params'])
+    hdbscan_params = config['hdbscan_params'].copy()
+    logger.info(f"HDBSCAN parameters: min_cluster_size={hdbscan_params.get('min_cluster_size')}, "
+               f"max_cluster_size={hdbscan_params.get('max_cluster_size')}, "
+               f"cluster_selection_epsilon={hdbscan_params.get('cluster_selection_epsilon')}")
+    hdbscan_model = HDBSCAN(**hdbscan_params)
     
     # Configure vectorizer for better academic term extraction
     vectorizer_model = CountVectorizer(
@@ -252,13 +260,14 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
         )
     
     # Initialize standard BERTopic model
+    # NOTE: Following BERTopic best practices - let HDBSCAN find natural clusters
     topic_model = BERTopic(
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
         vectorizer_model=vectorizer_model,
         ctfidf_model=ctfidf_model,  # Add ClassTfidfTransformer
         calculate_probabilities=config['data']['calculate_probabilities'],
-        nr_topics=config['data']['nr_topics'],
+        # REMOVED nr_topics - will use post-training reduction if needed
         min_topic_size=config['data']['min_topic_size'],
         verbose=True
     )
@@ -290,8 +299,10 @@ def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model,
     
     # Prepare seed topic lists for BERTopic
     seed_topic_list = []
+    
     for topic_name, topic_config in topics_dict.items():
         seeds = topic_config.get('seeds', [])
+        
         if seeds:
             seed_topic_list.append(seeds)
             logger.info(f"   📋 {topic_name}: {seeds}")
@@ -310,9 +321,9 @@ def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model,
         )
     
     logger.info(f"   🎯 Configured {len(seed_topic_list)} guided topics")
-    logger.info(f"   📊 Background topics: {guided_params.get('background_topics', True)}")
     
     # Initialize BERTopic model with guided topic modeling
+    # NOTE: Following BERTopic best practices - let HDBSCAN find natural clusters first
     topic_model = BERTopic(
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
@@ -320,7 +331,7 @@ def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model,
         ctfidf_model=ctfidf_model,
         seed_topic_list=seed_topic_list,  # Enable guided topic modeling
         calculate_probabilities=config['data']['calculate_probabilities'],
-        nr_topics=guided_params.get('number_of_guided_topics', len(seed_topic_list)) if not guided_params.get('background_topics', True) else "auto",
+        # REMOVED nr_topics - will use post-training reduction if needed
         min_topic_size=config['data']['min_topic_size'],
         verbose=True
     )
@@ -329,14 +340,16 @@ def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model,
 
 
 def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
-                  logger: logging.Logger) -> Tuple[List[int], np.ndarray]:
+                  config: Dict, logger: logging.Logger) -> Tuple[List[int], np.ndarray]:
     """
     Perform topic modeling analysis with pre-computed embeddings.
+    Includes post-training topic reduction following BERTopic best practices.
     
     Args:
         topic_model: Configured BERTopic model
         docs: List of documents
         embeddings: Pre-computed document embeddings
+        config: Configuration dictionary
         logger: Configured logger instance
         
     Returns:
@@ -347,14 +360,35 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
     # Use pre-computed embeddings to avoid recomputation
     topics, probs = topic_model.fit_transform(docs, embeddings)
     
-    # Log analysis results
-    n_topics = len(set(topics)) - (1 if -1 in topics else 0)
+    # Log initial analysis results
+    n_topics_initial = len(set(topics)) - (1 if -1 in topics else 0)
     n_outliers = sum(1 for t in topics if t == -1)
     
-    logger.info(f"Analysis complete:")
-    logger.info(f"  - Found {n_topics} topics")
+    logger.info(f"Initial analysis complete:")
+    logger.info(f"  - Found {n_topics_initial} topics (before reduction)")
     logger.info(f"  - {n_outliers} outlier documents")
     logger.info(f"  - {len(docs) - n_outliers} documents assigned to topics")
+    
+    # Log final analysis results
+    n_topics_final = len(set(topics)) - (1 if -1 in topics else 0)
+    logger.info(f"✅ Analysis complete:")
+    logger.info(f"  - Final topic count: {n_topics_final}")
+    logger.info(f"  - {n_outliers} outlier documents") 
+    logger.info(f"  - {len(docs) - n_outliers} documents assigned to topics")
+    
+    # Cluster size distribution analysis
+    logger.info("📊 Cluster size distribution:")
+    cluster_sizes = []
+    for topic_id in sorted(set(topics)):
+        if topic_id != -1:  # Skip outliers
+            count = topics.count(topic_id)
+            cluster_sizes.append(count)
+    
+    if cluster_sizes:
+        logger.info(f"  📈 Largest cluster: {max(cluster_sizes)} documents")
+        logger.info(f"  📉 Smallest cluster: {min(cluster_sizes)} documents")
+        logger.info(f"  📊 Average cluster size: {sum(cluster_sizes) / len(cluster_sizes):.1f}")
+        logger.info(f"  🎯 Median cluster size: {sorted(cluster_sizes)[len(cluster_sizes)//2]}")
     
     return topics, probs
 
@@ -663,7 +697,7 @@ def main():
         
         # Setup and train BERTopic model
         topic_model = setup_bertopic_model(config, logger)
-        topics, probs = analyze_topics(topic_model, docs, embeddings, logger)
+        topics, probs = analyze_topics(topic_model, docs, embeddings, config, logger)
         
         # Create visualizations
         create_visualizations(topic_model, docs, embeddings, config, output_dir, logger)

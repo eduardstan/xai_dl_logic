@@ -10,14 +10,16 @@ embedding_model:
 
 umap_params:
   n_neighbors: 15
-  n_components: 15  # Balanced: preserves structure without over-clustering
+  n_components: 50
   min_dist: 0.0
   metric: "cosine"
   random_state: 42
 
 hdbscan_params:
-  min_cluster_size: 15
+  min_cluster_size: 20
+  max_cluster_size: 200         # NEW: Prevents clusters >10% of corpus
   min_samples: 5
+  cluster_selection_epsilon: 0.10  # NEW: Finer granularity control
   metric: "euclidean"
   cluster_selection_method: "eom"
   prediction_data: true  # Enable prediction data for probabilities
@@ -33,7 +35,7 @@ visualization:
 # Data Processing
 data:
   min_topic_size: 10
-  nr_topics: "auto"  # Let BERTopic determine optimal number
+  topics: "auto"  # Let BERTopic determine optimal number
   calculate_probabilities: false  # Temporarily disable to avoid HDBSCAN prediction error
   text_fields:
     - "abstract"
@@ -79,7 +81,7 @@ systematic_review:
   min_papers_per_cluster: 2     # Minimum papers even for small clusters
   
   # Diversity selection parameters
-  diversity_weight: 0.75  # Balance between centrality (0.0) and diversity (1.0)
+  diversity_weight: 0.8  # Balance between centrality (0.0) and diversity (1.0)
   similarity_threshold: 0.8  # Minimum similarity for paper assignment
   min_diversity_threshold: 0.25  # Minimum diversity score to consider a paper
   use_iterative_selection: true  # Use iterative optimization instead of greedy
@@ -103,43 +105,55 @@ domain_guidance:
   # Seed words for topic representation enhancement
   seed_words:
     enabled: true
-    multiplier: 2.0
+    multiplier: 3.0
     # Mix of single words and multi-word phrases for domain concepts
     words: [
-      "explainable", "interpretable", "transparent", "explainable ai", "deep learning",
-      "symbolic", "logic", "logical", "formal", "reasoning", "decision tree", "decision list", "decision set", 
-      "knowledge graph", "ontology", "rule",
+      "explainable", "interpretable", "transparent", "deep", "reinforcement",
+      "symbolic", "logic", "logical", "formal", "reasoning", 
+      "decision tree", "decision list", "decision set", 
+      "predicate", "clause", "if then", "if-then", "horn",
+      "fuzzy", "neurofuzzy", "tsk",
+      "neuro-fuzzy", "neurosymbolic", "neuro-symbolic",
+      "knowledge", "ontology", "rule", "semantic", 
       "neural", "deep", "network", "transformer", "attention", "embedding", "gradient",
+      "surrogate", "global", "model-agnostic", "local",
     ]
     
-  # Guided Topic Modeling - Phase 2
+  # Guided Topic Modeling - Phase 3: Fine-Grained Taxonomy-Aligned Topics
   guided_topics:
-    enabled: true
-    # Define guided topics to ensure specific domain topics are captured
-    # Each topic defined by seed words that guide cluster formation
+    enabled: false
+    # Define fine-grained guided topics reflecting specific methodologies within XAI domains
     topics:
-      explainable_ai:
-        seeds: ["explainable", "interpretable", "transparency", "explanation", "xai"]
-        weight: 1.5  # Influence strength on cluster formation
-      symbolic_reasoning:
-        seeds: ["symbolic", "logic", "formal", "reasoning", "ontology"]
-        weight: 1.5
-      deep_learning:
-        seeds: ["neural", "deep", "network", "learning", "gradient"]
-        weight: 1.5
-      knowledge_representation:
-        seeds: ["knowledge", "graph", "representation", "semantic", "ontology"]
-        weight: 1.2
-      decision_systems:
-        seeds: ["decision", "tree", "rule", "forest", "classification"]
-        weight: 1.2
+      # Neural Network Architecture - Standard Deep Learning
+      convolutional_networks:
+        seeds: ["cnn", "convolution", "convolutional", "filter", "pooling"]
+      transformer_attention:
+        seeds: ["transformer", "attention", "bert", "self-attention", "encoder"]
+      graph_neural_networks:
+        seeds: ["gnn", "graph", "node", "edge", "adjacency"]
+      
+      # Rule Formalism and Representation  
+      fuzzy_logic_systems:
+        seeds: ["fuzzy", "membership", "linguistic", "defuzzification", "rule"]
+      decision_tree_methods:
+        seeds: ["tree", "forest", "split", "leaf", "branch"]
+      first_order_logic:
+        seeds: ["predicate", "clause", "horn", "resolution", "unification"]
+      
+      # Hybrid and Integration Approaches
+      neuro_symbolic_integration:
+        seeds: ["neuro-symbolic", "neural-symbolic", "integration", "hybrid", "reasoning"]
+      neuro_fuzzy_systems:
+        seeds: ["neuro-fuzzy", "anfis", "adaptive", "membership", "neural"]
+      
+      # Explainability Methods
+      local_explanation_methods:
+        seeds: ["lime", "shap", "local", "perturbation", "surrogate"]
+      global_explanation_methods:
+        seeds: ["global", "model-agnostic", "permutation", "partial", "dependence"]
     
-    # Guided topic modeling parameters
-    parameters:
-      number_of_guided_topics: 5  # How many guided topics to enforce
-      diversity_threshold: 0.1    # Minimum diversity between guided topics
-      background_topics: true     # Allow discovery of additional topics beyond guided ones
-      topic_coherence_weight: 0.3 # Balance between guidance and natural coherence
+    # Following BERTopic documentation - only use seed_topic_list parameter
+    # BERTopic handles guided topics automatically from the seeds above
     
   representation_models:
     enabled: false
