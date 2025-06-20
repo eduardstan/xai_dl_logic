@@ -196,6 +196,7 @@ def prepare_embeddings(texts: List[str], config: Dict, logger: logging.Logger) -
 def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
     """
     Configure BERTopic model with optimized parameters for academic text.
+    Supports both seed words and guided topic modeling.
     
     Args:
         config: Configuration dictionary
@@ -241,7 +242,16 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
     else:
         logger.info("Seed words enhancement disabled")
     
-    # Initialize BERTopic model
+    # Check if guided topic modeling is enabled
+    guided_topics_config = config.get('domain_guidance', {}).get('guided_topics', {})
+    if guided_topics_config.get('enabled', False):
+        logger.info("🎯 Guided topic modeling enabled")
+        return setup_guided_bertopic_model(
+            config, umap_model, hdbscan_model, vectorizer_model, 
+            ctfidf_model, logger
+        )
+    
+    # Initialize standard BERTopic model
     topic_model = BERTopic(
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
@@ -249,6 +259,68 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
         ctfidf_model=ctfidf_model,  # Add ClassTfidfTransformer
         calculate_probabilities=config['data']['calculate_probabilities'],
         nr_topics=config['data']['nr_topics'],
+        min_topic_size=config['data']['min_topic_size'],
+        verbose=True
+    )
+    
+    return topic_model
+
+
+def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model, 
+                               vectorizer_model, ctfidf_model, logger: logging.Logger) -> BERTopic:
+    """
+    Configure BERTopic model with guided topic modeling.
+    
+    Args:
+        config: Configuration dictionary
+        umap_model: Configured UMAP model
+        hdbscan_model: Configured HDBSCAN model
+        vectorizer_model: Configured vectorizer
+        ctfidf_model: Configured ClassTfidfTransformer (can be None)
+        logger: Configured logger instance
+        
+    Returns:
+        BERTopic model configured for guided topic modeling
+    """
+    guided_config = config['domain_guidance']['guided_topics']
+    guided_params = guided_config.get('parameters', {})
+    
+    # Extract guided topics and their seed words
+    topics_dict = guided_config.get('topics', {})
+    
+    # Prepare seed topic lists for BERTopic
+    seed_topic_list = []
+    for topic_name, topic_config in topics_dict.items():
+        seeds = topic_config.get('seeds', [])
+        if seeds:
+            seed_topic_list.append(seeds)
+            logger.info(f"   📋 {topic_name}: {seeds}")
+    
+    if not seed_topic_list:
+        logger.warning("Guided topics enabled but no topic seeds provided - falling back to standard model")
+        return BERTopic(
+            umap_model=umap_model,
+            hdbscan_model=hdbscan_model,
+            vectorizer_model=vectorizer_model,
+            ctfidf_model=ctfidf_model,
+            calculate_probabilities=config['data']['calculate_probabilities'],
+            nr_topics=config['data']['nr_topics'],
+            min_topic_size=config['data']['min_topic_size'],
+            verbose=True
+        )
+    
+    logger.info(f"   🎯 Configured {len(seed_topic_list)} guided topics")
+    logger.info(f"   📊 Background topics: {guided_params.get('background_topics', True)}")
+    
+    # Initialize BERTopic model with guided topic modeling
+    topic_model = BERTopic(
+        umap_model=umap_model,
+        hdbscan_model=hdbscan_model,
+        vectorizer_model=vectorizer_model,
+        ctfidf_model=ctfidf_model,
+        seed_topic_list=seed_topic_list,  # Enable guided topic modeling
+        calculate_probabilities=config['data']['calculate_probabilities'],
+        nr_topics=guided_params.get('number_of_guided_topics', len(seed_topic_list)) if not guided_params.get('background_topics', True) else "auto",
         min_topic_size=config['data']['min_topic_size'],
         verbose=True
     )
@@ -477,7 +549,36 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 - Embedding model: {config['embedding_model']['name']}
 - UMAP neighbors: {config['umap_params']['n_neighbors']}
 - HDBSCAN min cluster size: {config['hdbscan_params']['min_cluster_size']}
-- Min topic size: {config['data']['min_topic_size']}
+- Min topic size: {config['data']['min_topic_size']}"""
+    
+    # Add guided topics information if enabled
+    guided_config = config.get('domain_guidance', {}).get('guided_topics', {})
+    if guided_config.get('enabled', False):
+        report += f"""
+- Guided topic modeling: ENABLED
+- Number of guided topics: {len(guided_config.get('topics', {}))}
+- Background topics allowed: {guided_config.get('parameters', {}).get('background_topics', True)}
+- Guided topics configured:"""
+        for topic_name, topic_config in guided_config.get('topics', {}).items():
+            seeds = topic_config.get('seeds', [])
+            weight = topic_config.get('weight', 1.0)
+            report += f"\n  * {topic_name}: {seeds} (weight: {weight})"
+    else:
+        report += f"""
+- Guided topic modeling: DISABLED"""
+    
+    # Add seed words information if enabled
+    seed_config = config.get('domain_guidance', {}).get('seed_words', {})
+    if seed_config.get('enabled', False):
+        report += f"""
+- Seed words enhancement: ENABLED
+- Seed multiplier: {seed_config.get('multiplier', 2.0)}x
+- Number of seed words: {len(seed_config.get('words', []))}"""
+    else:
+        report += f"""
+- Seed words enhancement: DISABLED"""
+    
+    report += f"""
 
 ## Top 10 Topics by Size
 """
