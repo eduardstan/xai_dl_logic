@@ -112,10 +112,34 @@ domain_guidance:
       "neural", "deep", "network", "transformer", "attention", "embedding", "gradient",
     ]
     
-  # Future extensions
+  # Guided Topic Modeling - Phase 2
   guided_topics:
-    enabled: false
-    # Will be added in Phase 2 if needed
+    enabled: true
+    # Define guided topics to ensure specific domain topics are captured
+    # Each topic defined by seed words that guide cluster formation
+    topics:
+      explainable_ai:
+        seeds: ["explainable", "interpretable", "transparency", "explanation", "xai"]
+        weight: 1.5  # Influence strength on cluster formation
+      symbolic_reasoning:
+        seeds: ["symbolic", "logic", "formal", "reasoning", "ontology"]
+        weight: 1.5
+      deep_learning:
+        seeds: ["neural", "deep", "network", "learning", "gradient"]
+        weight: 1.5
+      knowledge_representation:
+        seeds: ["knowledge", "graph", "representation", "semantic", "ontology"]
+        weight: 1.2
+      decision_systems:
+        seeds: ["decision", "tree", "rule", "forest", "classification"]
+        weight: 1.2
+    
+    # Guided topic modeling parameters
+    parameters:
+      number_of_guided_topics: 5  # How many guided topics to enforce
+      diversity_threshold: 0.1    # Minimum diversity between guided topics
+      background_topics: true     # Allow discovery of additional topics beyond guided ones
+      topic_coherence_weight: 0.3 # Balance between guidance and natural coherence
     
   representation_models:
     enabled: false
