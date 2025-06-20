@@ -82,4 +82,6 @@ Thumbs.db
 # Large result files (optional - keep structure but not huge files)
 results/*.png
 results/*.html
-bertopic_analysis/plots/*.html 
+bertopic_analysis/plots/*.html
+bertopic_analysis/results/
+bertopic_analysis/models/ 
