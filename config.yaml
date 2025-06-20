@@ -106,14 +106,10 @@ domain_guidance:
     multiplier: 2.0
     # Mix of single words and multi-word phrases for domain concepts
     words: [
-      # XAI and Interpretability
-      "explainable", "interpretable", "transparent", "explainable ai", "machine learning", "deep learning", "neural network", "artificial intelligence",
-      # Symbolic AI  
-      "symbolic", "logic", "formal", "reasoning", "decision tree", "knowledge graph", "ontology", "rule based", "symbolic reasoning",
-      # Sub-symbolic/Neural
-      "neural", "deep", "network", "transformer", "attention", "embedding", "gradient", "convolutional neural", "recurrent neural",
-      # General ML
-      "tree", "forest", "svm", "linear", "ensemble", "classification", "regression", "clustering"
+      "explainable", "interpretable", "transparent", "explainable ai", "deep learning",
+      "symbolic", "logic", "logical", "formal", "reasoning", "decision tree", "decision list", "decision set", 
+      "knowledge graph", "ontology", "rule",
+      "neural", "deep", "network", "transformer", "attention", "embedding", "gradient",
     ]
     
   # Future extensions

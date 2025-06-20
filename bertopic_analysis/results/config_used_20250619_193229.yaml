@@ -18,25 +18,26 @@ domain_guidance:
     - explainable
     - interpretable
     - transparent
+    - explainable ai
+    - deep learning
     - symbolic
     - logic
+    - logical
     - formal
+    - reasoning
+    - decision tree
+    - decision list
+    - decision set
+    - knowledge graph
+    - ontology
+    - rule
     - neural
     - deep
     - network
-    - reasoning
-    - rule
-    - tree
-    - forest
-    - attention
     - transformer
-    - ontology
-    - knowledge
+    - attention
     - embedding
     - gradient
-    - svm
-    - linear
-    - ensemble
 embedding_model:
   batch_size: 64
   device: auto
@@ -119,7 +120,7 @@ timestamp_format: '%Y%m%d_%H%M%S'
 umap_params:
   metric: cosine
   min_dist: 0.0
-  n_components: 5
+  n_components: 15
   n_neighbors: 15
   random_state: 42
 visualization:
