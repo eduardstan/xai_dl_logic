@@ -36,11 +36,40 @@ visualization:
 data:
   min_topic_size: 10
   topics: "auto"  # Let BERTopic determine optimal number
-  calculate_probabilities: false  # Temporarily disable to avoid HDBSCAN prediction error
+  calculate_probabilities: false  # Disable due to BERTopic compatibility issue
   text_fields:
     - "abstract"
     - "title"
     - "keywords"
+
+# Outlier Reduction Configuration
+outlier_reduction:
+  enabled: true
+  # Strategy options: "probabilities", "distributions", "c-tf-idf", "embeddings"
+  # Multiple strategies can be chained together
+  strategies:
+    # Primary strategy - fast and effective using c-TF-IDF similarity
+    - strategy: "c-tf-idf"
+      threshold: 0.1  # Minimum similarity for assignment
+      
+    # Secondary strategy for remaining outliers - using document embeddings
+    - strategy: "embeddings" 
+      threshold: 0.7  # Cosine similarity threshold for embeddings
+        
+    # Final strategy using topic distributions - more thorough but slower
+    - strategy: "distributions"
+      threshold: 0.05  # More lenient threshold for remaining outliers
+      distributions_params:
+        min_similarity: 0.05
+        window: 4
+        stride: 1
+      
+  # Update topic representations after outlier reduction
+  update_representations: true
+  
+  # Logging and analysis
+  verbose: true
+  save_intermediate_results: true
 
 # Output Configuration
 output:
