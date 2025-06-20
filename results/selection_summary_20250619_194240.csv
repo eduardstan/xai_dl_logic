@@ -1,0 +1,22 @@
+topic_id,topic_name,cluster_size,size_category,papers_selected,selection_ratio,avg_centrality,avg_diversity
+0,0_reasoning_deep_attention_graph,1749,xxxlarge,200,0.11435105774728416,0.47562507,0.35776258
+1,1_recommendation_user_users_explainable,182,xxlarge,27,0.14835164835164835,0.6274155,0.33884504
+2,2_fuzzy_rule_rules_deep,175,xxlarge,26,0.14857142857142858,0.5511471,0.39556503
+3,3_traffic_trajectory_driving_autonomous,89,xlarge,13,0.14606741573033707,0.61931235,0.35506338
+4,4_students_tracing_knowledge tracing_cognitive,64,large,9,0.140625,0.6266605,0.31855032
+5,5_financial_credit_stock_risk,57,large,8,0.14035087719298245,0.6034177,0.37237617
+6,6_media_news_social_detection,47,large,7,0.14893617021276595,0.5647778,0.40755647
+7,7_drug_molecular_protein_gene,43,large,6,0.13953488372093023,0.65616035,0.34305367
+8,8_fault_fault diagnosis_diagnosis_deep,40,medium,6,0.15,0.7266626,0.32696494
+9,9_robot_demonstrations_navigation_control,40,medium,6,0.15,0.6170504,0.3903896
+10,10_series_time series_forecasting_deep,33,medium,4,0.12121212121212122,0.63600135,0.37322986
+11,11_ml_manufacturing_materials_prediction,27,medium,4,0.14814814814814814,0.64487803,0.36692047
+12,12_physical_dynamics_deep_equations,27,medium,4,0.14814814814814814,0.56770104,0.43465623
+13,13_malware_detection_malicious_intrusion,26,medium,3,0.11538461538461539,0.67867357,0.35587755
+14,14_topic_topics_topic models_topic modeling,25,medium,3,0.12,0.7108595,0.35984418
+15,15_consensus_distributed_security_transparent,22,medium,3,0.13636363636363635,0.6448066,0.3937185
+16,16_spiking_neurons_biological_brain,21,medium,3,0.14285714285714285,0.67151815,0.38785717
+17,17_privacy_federated_federated learning_fl,16,small,2,0.125,0.7236878,0.28849882
+18,18_causal_structure learning_graphical_bayesian,15,small,2,0.13333333333333333,0.6783056,0.31066567
+19,19_fairness_fair_bias_trees,15,small,2,0.13333333333333333,0.7597043,0.29565752
+20,20_sentiment_sentiment analysis_aspect_attention,15,small,2,0.13333333333333333,0.772702,0.29586866

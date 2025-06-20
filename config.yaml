@@ -10,7 +10,7 @@ embedding_model:
 
 umap_params:
   n_neighbors: 15
-  n_components: 5
+  n_components: 15  # Balanced: preserves structure without over-clustering
   min_dist: 0.0
   metric: "cosine"
   random_state: 42
@@ -97,6 +97,29 @@ systematic_review:
     xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
     symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
     subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
+
+# Domain Knowledge Injection
+domain_guidance:
+  # Seed words for topic representation enhancement
+  seed_words:
+    enabled: true
+    multiplier: 2.0
+    # Mix of single words and multi-word phrases for domain concepts
+    words: [
+      "explainable", "interpretable", "transparent", "explainable ai", "deep learning",
+      "symbolic", "logic", "logical", "formal", "reasoning", "decision tree", "decision list", "decision set", 
+      "knowledge graph", "ontology", "rule",
+      "neural", "deep", "network", "transformer", "attention", "embedding", "gradient",
+    ]
+    
+  # Future extensions
+  guided_topics:
+    enabled: false
+    # Will be added in Phase 2 if needed
+    
+  representation_models:
+    enabled: false
+    # Will be added if custom representations needed
 
 # Reproducibility
 random_seed: 42
