@@ -23,32 +23,37 @@ A comprehensive topic modeling analysis of your `merged.bib` file using BERTopic
 conda activate xai_dl_logic
 ```
 
-### 2. Test Setup (Optional but Recommended)
+### 2. Verify Configuration
 ```bash
-python test_setup.py
+python -c "from bib_analyzer import load_config; print('✅ Configuration valid')"
 ```
 
 ### 3. Run Analysis
 
-**Option A: Interactive Jupyter Notebook (Recommended)**
-```bash
-jupyter lab bertopic_analysis.ipynb
-```
-
-**Option B: Full Script**
+**Main Script**
 ```bash
 python bib_analyzer.py
 ```
 
-## 💡 Why Use the Jupyter Notebook?
+**Advanced Systematic Review**
+```bash
+python advanced_systematic_analyzer.py
+```
 
-The Jupyter notebook is **highly recommended** because:
+**Enhanced Visualizations**
+```bash
+python create_enhanced_research_visualization.py
+```
 
-1. **⚡ Caching**: Once you compute embeddings (4-5 minutes), they're cached forever
+## 💡 Smart Caching System
+
+The analysis uses intelligent caching for maximum efficiency:
+
+1. **⚡ Fast Reruns**: Once you compute embeddings (2-3 minutes), they're cached forever
 2. **🔄 Iterative**: Modify parameters and re-run only what you need
-3. **🎯 Interactive**: Explore topics interactively without recomputing
-4. **📊 Visual**: See results immediately with interactive plots
-5. **🛡️ Safe**: No need to restart from scratch if something fails
+3. **🎯 GPU Accelerated**: Uses your RTX 2050 automatically
+4. **📊 Immediate Results**: Cached results load in seconds
+5. **🛡️ Reliable**: Hash-based validation ensures cache integrity
 
 ## 🎯 What You'll Get
 
