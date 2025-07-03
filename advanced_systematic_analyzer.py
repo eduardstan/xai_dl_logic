@@ -54,8 +54,8 @@ class AdvancedSystematicAnalyzer:
             logger.error(f"❌ Error loading config: {e}")
             raise
     
-    def load_analysis_results(self) -> Tuple[object, np.ndarray, List[Dict]]:
-        """Load cached BERTopic analysis results."""
+    def load_analysis_results(self) -> Tuple[object, np.ndarray, List[Dict], List[int]]:
+        """Load cached BERTopic analysis results with updated topic assignments."""
         try:
             # Load BERTopic model from bertopic_analysis/models
             models_dir = Path("bertopic_analysis/models")
@@ -68,6 +68,21 @@ class AdvancedSystematicAnalyzer:
             from bertopic import BERTopic
             topic_model = BERTopic.load(str(model_path))
             logger.info(f"📂 Loaded BERTopic model from {model_path}")
+            
+            # Load the MOST RECENT topic assignments from CSV results (post-outlier reduction)
+            results_dir = Path("bertopic_analysis/results")
+            csv_files = list(results_dir.glob("bibliography_with_topics_*.csv"))
+            if not csv_files:
+                raise FileNotFoundError("No results CSV files found in bertopic_analysis/results")
+            
+            # Use the most recent CSV file
+            csv_path = max(csv_files, key=lambda x: x.stat().st_mtime)
+            results_df = pd.read_csv(csv_path)
+            updated_topics = results_df['topic'].tolist()
+            logger.info(f"📂 Loaded UPDATED topic assignments from {csv_path}")
+            logger.info(f"   📊 Total papers: {len(updated_topics)}")
+            logger.info(f"   📊 Outliers: {sum(1 for t in updated_topics if t == -1)}")
+            logger.info(f"   📊 Assigned to topics: {sum(1 for t in updated_topics if t != -1)}")
             
             # Load embeddings from cache
             embeddings_files = list(self.cache_dir.glob("embeddings_*.pkl"))
@@ -89,8 +104,12 @@ class AdvancedSystematicAnalyzer:
                 documents = pickle.load(f)
             logger.info(f"📂 Loaded documents from {parsed_path}")
             
-            logger.info(f"✅ Analysis results loaded: {len(documents)} documents, {len(embeddings)} embeddings")
-            return topic_model, embeddings, documents
+            # Verify data consistency
+            if len(updated_topics) != len(embeddings) or len(updated_topics) != len(documents):
+                raise ValueError(f"Data length mismatch: topics={len(updated_topics)}, embeddings={len(embeddings)}, documents={len(documents)}")
+            
+            logger.info(f"✅ Analysis results loaded: {len(documents)} documents, {len(embeddings)} embeddings, {len(updated_topics)} topic assignments")
+            return topic_model, embeddings, documents, updated_topics
             
         except Exception as e:
             logger.error(f"❌ Error loading analysis results: {e}")
@@ -442,10 +461,10 @@ class AdvancedSystematicAnalyzer:
         """Process all topics and select diverse representative papers."""
         logger.info("🔍 Processing topics for diverse representative selection...")
         
-        topic_model, embeddings, documents = self.load_analysis_results()
+        topic_model, embeddings, documents, updated_topics = self.load_analysis_results()
         
-        # Get topic assignments
-        topics = topic_model.topics_
+        # Use the updated topic assignments (post-outlier reduction)
+        topics = updated_topics
         topic_info = topic_model.get_topic_info()
         
         all_results = []

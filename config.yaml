@@ -10,13 +10,13 @@ embedding_model:
 
 umap_params:
   n_neighbors: 15
-  n_components: 50
+  n_components: 128
   min_dist: 0.0
   metric: "cosine"
   random_state: 42
 
 hdbscan_params:
-  min_cluster_size: 20
+  min_cluster_size: 35
   max_cluster_size: 200         # NEW: Prevents clusters >10% of corpus
   min_samples: 5
   cluster_selection_epsilon: 0.10  # NEW: Finer granularity control
@@ -56,16 +56,17 @@ outlier_reduction:
     - strategy: "embeddings" 
       threshold: 0.7  # Cosine similarity threshold for embeddings
         
-    # Final strategy using topic distributions - more thorough but slower
-    - strategy: "distributions"
-      threshold: 0.05  # More lenient threshold for remaining outliers
-      distributions_params:
-        min_similarity: 0.05
-        window: 4
-        stride: 1
+    # # Final strategy using topic distributions - more thorough but slower
+    # - strategy: "distributions"
+    #   threshold: 0.05  # More lenient threshold for remaining outliers
+    #   distributions_params:
+    #     min_similarity: 0.05
+    #     window: 4
+    #     stride: 1
       
   # Update topic representations after outlier reduction
-  update_representations: true
+  # NOTE: We preserve original topic representations for quality topic names
+  update_representations: false
   
   # Logging and analysis
   verbose: true
@@ -110,7 +111,7 @@ systematic_review:
   min_papers_per_cluster: 2     # Minimum papers even for small clusters
   
   # Diversity selection parameters
-  diversity_weight: 0.8  # Balance between centrality (0.0) and diversity (1.0)
+  diversity_weight: 0.85  # Balance between centrality (0.0) and diversity (1.0)
   similarity_threshold: 0.8  # Minimum similarity for paper assignment
   min_diversity_threshold: 0.25  # Minimum diversity score to consider a paper
   use_iterative_selection: true  # Use iterative optimization instead of greedy
@@ -126,26 +127,68 @@ systematic_review:
   # Research focus alignment (using wildcards from original query)
   research_keywords:
     xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
+    # xai: ["explainable", "interpretable", "accountable", "explicable", "transparent", "translucent",
+    #   "explainability", "interpretability", "accountability", "explicability", "transparency", "translucency",
+    #   "XAI", "IML",
+    # ]
     symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
+    # symbolic: ["symbolic*", "logic*", "logical*", "formal*", "knowledge*",
+    #   "decision tree*", "decision list*", "decision set*", 
+    #   "ontolog*",
+    #   "constraint", "rule", "rules", "reasoning", "semantic*",
+    #   "predicate*", "clause*", "formula*", "if then", "if-then", "horn",
+    # ]
     subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
-
+    # subsymbolic: [
+    #   # Fuzzy and Neuro-Fuzzy Systems (fuzzy)
+    #   "fuzzy", "neuro*fuzzy", "tsk",
+    #   # Neuro-Symbolic and Semantic Reasoning (neuro-symbolic)
+    #   "neuro*symbolic",  
+    #   # Neural Network Architecture (neural)
+    #   "transformer*", "attention*", "embedding*", "gradient*",
+    #   "cnn*", "convolution*", "convolutional*", "filter*", "pooling*",
+    #   "rnn*", "recurrent*", "recurrent neural network*", "lstm*", "gru*",
+    #   "gnn*", "graph*", "node*", "edge*", "adjacency*",
+    #   "bert", "self-attention", "encoder*",
+    #   "spike*", "spiking*neural network", "snn*", 
+    #   "differentiab*", 
+    #   # Other Deep Learning Techniques (deep)
+    #   "deep", "reinforcement", "neural", "network", 
+    # ]
 # Domain Knowledge Injection
 domain_guidance:
   # Seed words for topic representation enhancement
   seed_words:
     enabled: true
-    multiplier: 3.0
+    multiplier: 2.0
     # Mix of single words and multi-word phrases for domain concepts
     words: [
-      "explainable", "interpretable", "transparent", "deep", "reinforcement",
-      "symbolic", "logic", "logical", "formal", "reasoning", 
+      # Explainability and Interpretability (XAI)
+      "explainable", "interpretable", "accountable", "explicable", "transparent", "translucent",
+      "explainability", "interpretability", "accountability", "explicability", "transparency", "translucency",
+      "XAI", "IML",
+      # Symbolic and Logical Reasoning (symbolic)
+      "symbolic", "logic", "logical", "formal", "knowledge", "semantic", "semantics",
       "decision tree", "decision list", "decision set", 
-      "predicate", "clause", "if then", "if-then", "horn",
-      "fuzzy", "neurofuzzy", "tsk",
-      "neuro-fuzzy", "neurosymbolic", "neuro-symbolic",
-      "knowledge", "ontology", "rule", "semantic", 
-      "neural", "deep", "network", "transformer", "attention", "embedding", "gradient",
-      "surrogate", "global", "model-agnostic", "local",
+      "knowledge-base", "knowledege base",
+      "ontology", "ontological", "ontology-based", "ontology-guided",
+      "constraint", "rule", "rules", "reasoning", 
+      "predicate", "clause", "formula", "if then", "if-then", "horn",
+      # Fuzzy and Neuro-Fuzzy Systems (fuzzy)
+      "fuzzy", "neurofuzzy", "neuro-fuzzy", "tsk",
+      # Neuro-Symbolic and Semantic Reasoning (neuro-symbolic)
+      "neurosymbolic", "neuro-symbolic",   
+      # Neural Network Architecture (neural)
+      "transformer", "attention", "embedding", "gradient",
+      "cnn", "convolution", "convolutional", "filter", "pooling",
+      "rnn", "recurrent", "recurrent neural network", "lstm", "gru",
+      "gnn", "graph", "node", "edge", "adjacency",
+      "bert", "self-attention", "encoder",
+      "spike", "spiking", "spiking neural network", "snn", 
+      "differentiable", "differentiability", 
+      # Other Deep Learning Techniques (deep)
+      "deep", "reinforcement", "neural", "network", 
+      # "surrogate", "global", "model-agnostic", "local",
     ]
     
   # Guided Topic Modeling - Phase 3: Fine-Grained Taxonomy-Aligned Topics
