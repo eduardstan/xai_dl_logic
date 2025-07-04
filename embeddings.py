@@ -12,17 +12,17 @@ import torch
 from loguru import logger
 from sentence_transformers import SentenceTransformer
 
-from utils import cache_exists, load_from_cache, save_to_cache
+from utils import cache_exists, load_from_cache, save_to_cache, get_cache_dir, get_embedding_config
 
 
 def prepare_embeddings(texts: List[str], config: Dict) -> np.ndarray:
     """Generate embeddings using sentence transformers with caching and GPU optimization."""
-    model_config = config['embedding_model']
+    model_config = get_embedding_config(config)
     
     # Create embedding cache key based on model and documents
     docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
     model_name = model_config['name']
-    cache_dir = Path(config['output']['cache_dir'])
+    cache_dir = get_cache_dir(config)
     embedding_cache_name = f"embeddings_{model_name.replace('/', '_')}_{docs_hash[:8]}"
     
     # Check for cached embeddings
@@ -94,10 +94,10 @@ def _get_optimal_batch_size(model_config: Dict, device: str) -> int:
 
 def get_embedding_cache_info(texts: List[str], config: Dict) -> Dict:
     """Get information about embedding cache status."""
-    model_config = config['embedding_model']
+    model_config = get_embedding_config(config)
     docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
     model_name = model_config['name']
-    cache_dir = Path(config['output']['cache_dir'])
+    cache_dir = get_cache_dir(config)
     embedding_cache_name = f"embeddings_{model_name.replace('/', '_')}_{docs_hash[:8]}"
     
     cache_path = cache_dir / f"{embedding_cache_name}.pkl"

@@ -90,6 +90,140 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
         raise ValueError(f"Error loading configuration file {config_path}: {e}")
 
 
+# === Config Helper Functions ===
+
+def get_cache_dir(config: Dict[str, Any]) -> Path:
+    """Get cache directory path from config."""
+    return Path(config['output']['cache_dir'])
+
+
+def get_results_dir(config: Dict[str, Any]) -> Path:
+    """Get results directory path from config."""
+    return Path(config['output']['results_dir'])
+
+
+def get_models_dir(config: Dict[str, Any]) -> Path:
+    """Get models directory path from config."""
+    return Path(config['output']['models_dir'])
+
+
+def get_plots_dir(config: Dict[str, Any]) -> Path:
+    """Get plots directory path from config."""
+    return Path(config['output']['plots_dir'])
+
+
+def get_embedding_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get embedding model configuration section."""
+    return config['embedding_model']
+
+
+def get_umap_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get UMAP parameters configuration section."""
+    return config['umap_params']
+
+
+def get_hdbscan_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get HDBSCAN parameters configuration section."""
+    return config['hdbscan_params']
+
+
+def get_visualization_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get visualization configuration section."""
+    return config['visualization']
+
+
+def get_systematic_review_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get systematic review configuration section."""
+    return config['systematic_review']
+
+
+def get_outlier_reduction_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get outlier reduction configuration section."""
+    return config.get('outlier_reduction', {})
+
+
+def get_domain_guidance_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get domain guidance configuration section."""
+    return config.get('domain_guidance', {})
+
+
+def get_random_seed(config: Dict[str, Any]) -> int:
+    """Get random seed for reproducibility."""
+    return config.get('random_seed', 42)
+
+
+def get_timestamp_format(config: Dict[str, Any]) -> str:
+    """Get timestamp format string."""
+    return config.get('timestamp_format', '%Y%m%d_%H%M%S')
+
+
+def ensure_output_dirs(config: Dict[str, Any], base_dir: Optional[Union[str, Path]] = None) -> Dict[str, Path]:
+    """
+    Ensure all output directories exist and return path dictionary.
+    
+    Args:
+        config: Configuration dictionary
+        base_dir: Optional base directory to prepend to all paths
+        
+    Returns:
+        Dictionary mapping directory names to Path objects
+    """
+    base_path = Path(base_dir) if base_dir else Path.cwd()
+    
+    dirs = {
+        'cache': get_cache_dir(config),
+        'results': get_results_dir(config),
+        'models': get_models_dir(config),
+        'plots': get_plots_dir(config)
+    }
+    
+    # Create directories if they don't exist
+    for name, path in dirs.items():
+        full_path = base_path / path
+        full_path.mkdir(parents=True, exist_ok=True)
+        dirs[name] = full_path
+    
+    logger.info(f"📁 Output directories ready: {', '.join(dirs.keys())}")
+    return dirs
+
+
+def validate_config_sections(config: Dict[str, Any], required_sections: list) -> None:
+    """
+    Validate that required configuration sections exist.
+    
+    Args:
+        config: Configuration dictionary
+        required_sections: List of required section names
+        
+    Raises:
+        ValueError: If required sections are missing
+    """
+    missing_sections = []
+    
+    for section in required_sections:
+        if '.' in section:
+            # Handle nested sections like 'output.cache_dir'
+            keys = section.split('.')
+            current = config
+            try:
+                for key in keys:
+                    current = current[key]
+            except (KeyError, TypeError):
+                missing_sections.append(section)
+        else:
+            # Handle top-level sections
+            if section not in config:
+                missing_sections.append(section)
+    
+    if missing_sections:
+        raise ValueError(f"Missing required configuration sections: {', '.join(missing_sections)}")
+    
+    logger.info(f"✅ Configuration validation passed for: {', '.join(required_sections)}")
+
+
+# === End Config Helper Functions ===
+
+
 def get_file_hash(file_path: Union[str, Path]) -> str:
     """
     Generate MD5 hash of a file for cache validation.

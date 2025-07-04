@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List
 from loguru import logger
 
-from utils import get_file_hash, cache_exists, save_to_cache, load_from_cache
+from utils import get_file_hash, cache_exists, save_to_cache, load_from_cache, get_cache_dir
 
 
 def parse_bib_file(file_path: str, config: Dict) -> pd.DataFrame:
@@ -35,7 +35,7 @@ def parse_bib_file(file_path: str, config: Dict) -> pd.DataFrame:
         raise FileNotFoundError(f"BIB file not found: {file_path}")
     
     # Check cache first
-    cache_dir = Path(config['output']['cache_dir'])
+    cache_dir = get_cache_dir(config)
     bib_hash = get_file_hash(file_path)
     cache_name = f"parsed_bib_{bib_hash[:8]}"
     
