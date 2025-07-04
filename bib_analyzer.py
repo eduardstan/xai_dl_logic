@@ -6,7 +6,6 @@ Following best practices for topic modeling on academic literature.
 
 import os
 import pickle
-import logging
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +16,13 @@ import pandas as pd
 import numpy as np
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
+
+# Import shared utilities
+from utils import (
+    setup_logging, load_config, get_file_hash, cache_exists, 
+    save_to_cache, load_from_cache, get_cache_dir, get_results_dir,
+    get_models_dir, get_plots_dir, ensure_output_dirs
+)
 
 # BERTopic and ML imports
 from bertopic import BERTopic
@@ -40,29 +46,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def setup_logging(log_level: str = "INFO") -> logging.Logger:
-    """Configure logging with timestamps and structured format."""
-    logging.basicConfig(
-        level=getattr(logging, log_level),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    return logging.getLogger(__name__)
-
-
-def load_config(config_path: str = "config.yaml") -> Dict:
-    """Load configuration from YAML file with error handling."""
-    try:
-        with open(config_path, 'r') as file:
-            config = yaml.safe_load(file)
-        return config
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing configuration file: {e}")
-
-
-def parse_bib_file(file_path: str, config: Dict, logger: logging.Logger) -> pd.DataFrame:
+def parse_bib_file(file_path: str, config: Dict, logger) -> pd.DataFrame:
     """
     Parse BIB file and extract relevant text fields with caching.
     
@@ -75,7 +59,7 @@ def parse_bib_file(file_path: str, config: Dict, logger: logging.Logger) -> pd.D
         DataFrame with parsed bibliography entries
     """
     # Check if parsed data is cached
-    cache_dir = Path(config['output']['cache_dir'])
+    cache_dir = get_cache_dir(config)
     bib_hash = get_file_hash(file_path)
     cache_name = f"parsed_bib_{bib_hash[:8]}"
     
@@ -131,7 +115,7 @@ def parse_bib_file(file_path: str, config: Dict, logger: logging.Logger) -> pd.D
         raise
 
 
-def prepare_embeddings(texts: List[str], config: Dict, logger: logging.Logger) -> np.ndarray:
+def prepare_embeddings(texts: List[str], config: Dict, logger) -> np.ndarray:
     """
     Generate embeddings using sentence transformers with caching.
     
@@ -148,7 +132,7 @@ def prepare_embeddings(texts: List[str], config: Dict, logger: logging.Logger) -
     # Create embedding cache key based on model and documents
     docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
     model_name = model_config['name']
-    cache_dir = Path(config['output']['cache_dir'])
+    cache_dir = get_cache_dir(config)
     embedding_cache_name = f"embeddings_{model_name.replace('/', '_')}_{docs_hash[:8]}"
     
     if cache_exists(cache_dir, embedding_cache_name):
@@ -193,7 +177,7 @@ def prepare_embeddings(texts: List[str], config: Dict, logger: logging.Logger) -
     return embeddings
 
 
-def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
+def setup_bertopic_model(config: Dict, logger) -> BERTopic:
     """
     Configure BERTopic model with optimized parameters for academic text.
     Supports both seed words and guided topic modeling.
@@ -276,7 +260,7 @@ def setup_bertopic_model(config: Dict, logger: logging.Logger) -> BERTopic:
 
 
 def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model, 
-                               vectorizer_model, ctfidf_model, logger: logging.Logger) -> BERTopic:
+                               vectorizer_model, ctfidf_model, logger) -> BERTopic:
     """
     Configure BERTopic model with guided topic modeling.
     
@@ -340,7 +324,7 @@ def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model,
 
 
 def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
-                  config: Dict, logger: logging.Logger) -> Tuple[List[int], np.ndarray]:
+                  config: Dict, logger) -> Tuple[List[int], np.ndarray]:
     """
     Perform topic modeling analysis with pre-computed embeddings.
     Includes post-training topic reduction following BERTopic best practices.
@@ -404,7 +388,7 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
 
 def apply_outlier_reduction(topic_model: BERTopic, docs: List[str], topics: List[int], 
                           probs: np.ndarray, embeddings: np.ndarray, config: Dict, 
-                          logger: logging.Logger) -> List[int]:
+                          logger) -> List[int]:
     """
     Apply configurable outlier reduction strategies from BERTopic documentation.
     Reference: https://maartengr.github.io/BERTopic/getting_started/outlier_reduction/outlier_reduction.html
@@ -531,7 +515,7 @@ def apply_outlier_reduction(topic_model: BERTopic, docs: List[str], topics: List
 
 def create_visualizations(topic_model: BERTopic, docs: List[str], 
                          embeddings: np.ndarray, topics: List[int], config: Dict,
-                         output_dir: str, logger: logging.Logger) -> None:
+                         output_dir: str, logger) -> None:
     """
     Generate comprehensive visualizations following BERTopic best practices.
     Now supports updated topic assignments for consistent artifacts.
@@ -548,7 +532,7 @@ def create_visualizations(topic_model: BERTopic, docs: List[str],
     logger.info("🎨 Creating visualizations with updated topic assignments and preserved representations")
     
     viz_config = config['visualization']
-    plots_dir = Path(output_dir) / config['output']['plots_dir']
+    plots_dir = get_plots_dir(config, output_dir)
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Model now has updated topic assignments with preserved original representations
@@ -624,7 +608,7 @@ def create_visualizations(topic_model: BERTopic, docs: List[str],
 
 def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
                 probs: np.ndarray, embeddings: np.ndarray,
-                config: Dict, output_dir: str, logger: logging.Logger) -> None:
+                config: Dict, output_dir: str, logger) -> None:
     """
     Save analysis results and model artifacts with consistent topic assignments.
     Now generates topic_info from updated topics for consistency.
@@ -642,8 +626,8 @@ def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
     logger.info("💾 Saving analysis results with consistent topic assignments")
     
     # Create output directories
-    results_dir = Path(output_dir) / config['output']['results_dir']
-    models_dir = Path(output_dir) / config['output']['models_dir']
+    results_dir = get_results_dir(config, output_dir)
+    models_dir = get_models_dir(config, output_dir)
     
     for directory in [results_dir, models_dir]:
         directory.mkdir(parents=True, exist_ok=True)
@@ -707,7 +691,7 @@ def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
 
 
 def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataFrame, 
-                                        logger: logging.Logger) -> pd.DataFrame:
+                                        logger) -> pd.DataFrame:
     """
     Generate topic_info DataFrame from updated topic assignments.
     This ensures consistency when model representations aren't updated.
@@ -764,7 +748,7 @@ def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataF
 
 def generate_summary_report(topic_model: BERTopic, df: pd.DataFrame,
                           topics: List[int], config: Dict,
-                          output_dir: str, logger: logging.Logger) -> None:
+                          output_dir: str, logger) -> None:
     """
     Generate a summary report of the analysis using updated topic assignments.
     
@@ -778,7 +762,7 @@ def generate_summary_report(topic_model: BERTopic, df: pd.DataFrame,
     """
     logger.info("📋 Generating summary report with updated topic assignments")
     
-    results_dir = Path(output_dir) / config['output']['results_dir']
+    results_dir = get_results_dir(config, output_dir)
     
     # Basic statistics using updated topics
     n_documents = len(topics)
@@ -866,30 +850,6 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     
     logger.info(f"✅ Summary report generated: {report_filename}")
     print(report)  # Also display in console
-
-
-def get_file_hash(file_path: str) -> str:
-    """Get hash of file for cache validation."""
-    with open(file_path, 'rb') as f:
-        return hashlib.md5(f.read()).hexdigest()
-
-def cache_exists(cache_dir: Path, cache_name: str) -> bool:
-    """Check if cache file exists."""
-    return (cache_dir / f"{cache_name}.pkl").exists()
-
-def save_to_cache(data, cache_dir: Path, cache_name: str, logger: logging.Logger) -> None:
-    """Save data to cache."""
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    with open(cache_dir / f"{cache_name}.pkl", 'wb') as f:
-        pickle.dump(data, f)
-    logger.info(f"💾 Saved to cache: {cache_name}")
-
-def load_from_cache(cache_dir: Path, cache_name: str, logger: logging.Logger):
-    """Load data from cache."""
-    with open(cache_dir / f"{cache_name}.pkl", 'rb') as f:
-        data = pickle.load(f)
-    logger.info(f"📂 Loaded from cache: {cache_name}")
-    return data
 
 
 def main():
