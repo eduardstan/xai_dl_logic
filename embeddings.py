@@ -1,8 +1,6 @@
 """
 Embeddings module for XAI Deep Learning Logic Bibliography Analysis.
-
-This module provides text embedding generation using sentence transformers
-with GPU acceleration and intelligent caching capabilities.
+Text embedding generation with GPU acceleration and intelligent caching.
 """
 
 import hashlib
@@ -18,22 +16,7 @@ from utils import cache_exists, load_from_cache, save_to_cache
 
 
 def prepare_embeddings(texts: List[str], config: Dict) -> np.ndarray:
-    """
-    Generate embeddings using sentence transformers with intelligent caching.
-    
-    This function automatically detects GPU availability and optimizes batch size
-    for maximum performance. Results are cached to avoid recomputation.
-    
-    Args:
-        texts: List of text documents to embed
-        config: Configuration dictionary with embedding model settings
-        
-    Returns:
-        Numpy array of embeddings with shape (n_documents, embedding_dim)
-        
-    Raises:
-        RuntimeError: If model loading or embedding computation fails
-    """
+    """Generate embeddings using sentence transformers with caching and GPU optimization."""
     model_config = config['embedding_model']
     
     # Create embedding cache key based on model and documents
@@ -62,16 +45,7 @@ def prepare_embeddings(texts: List[str], config: Dict) -> np.ndarray:
 
 
 def _compute_embeddings(texts: List[str], model_config: Dict) -> np.ndarray:
-    """
-    Compute embeddings with GPU optimization and memory management.
-    
-    Args:
-        texts: List of text documents
-        model_config: Model configuration dictionary
-        
-    Returns:
-        Numpy array of embeddings
-    """
+    """Compute embeddings with GPU optimization and memory management."""
     # Detect and configure device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size = _get_optimal_batch_size(model_config, device)
@@ -113,37 +87,13 @@ def _compute_embeddings(texts: List[str], model_config: Dict) -> np.ndarray:
 
 
 def _get_optimal_batch_size(model_config: Dict, device: str) -> int:
-    """
-    Determine optimal batch size based on device and configuration.
-    
-    Args:
-        model_config: Model configuration dictionary
-        device: Device type ('cuda' or 'cpu')
-        
-    Returns:
-        Optimal batch size
-    """
+    """Determine optimal batch size based on device and configuration."""
     base_batch_size = model_config.get('batch_size', 64)
-    
-    if device == "cuda":
-        # Increase batch size for GPU with memory safety
-        return min(base_batch_size * 2, 128)
-    else:
-        # Use conservative batch size for CPU
-        return base_batch_size
+    return min(base_batch_size * 2, 128) if device == "cuda" else base_batch_size
 
 
 def get_embedding_cache_info(texts: List[str], config: Dict) -> Dict:
-    """
-    Get information about embedding cache status.
-    
-    Args:
-        texts: List of text documents
-        config: Configuration dictionary
-        
-    Returns:
-        Dictionary with cache information
-    """
+    """Get information about embedding cache status."""
     model_config = config['embedding_model']
     docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
     model_name = model_config['name']
@@ -163,42 +113,21 @@ def get_embedding_cache_info(texts: List[str], config: Dict) -> Dict:
 
 
 def validate_embeddings(embeddings: np.ndarray, texts: List[str]) -> bool:
-    """
-    Validate that embeddings are properly formed.
-    
-    Args:
-        embeddings: Numpy array of embeddings
-        texts: Original text documents
-        
-    Returns:
-        True if embeddings are valid, False otherwise
-    """
+    """Validate that embeddings are properly formed."""
     try:
-        # Check basic properties
-        if not isinstance(embeddings, np.ndarray):
-            logger.error("❌ Embeddings must be numpy array")
-            return False
+        checks = [
+            (isinstance(embeddings, np.ndarray), "❌ Embeddings must be numpy array"),
+            (len(embeddings) == len(texts), f"❌ Length mismatch: {len(embeddings)} != {len(texts)}"),
+            (embeddings.ndim == 2, f"❌ Must be 2D array, got {embeddings.ndim}D"),
+            (embeddings.shape[1] > 0, "❌ Embeddings have zero dimensions"),
+            (not np.any(np.isnan(embeddings)), "❌ Embeddings contain NaN values"),
+            (not np.any(np.isinf(embeddings)), "❌ Embeddings contain infinite values")
+        ]
         
-        if len(embeddings) != len(texts):
-            logger.error(f"❌ Embeddings length ({len(embeddings)}) != texts length ({len(texts)})")
-            return False
-        
-        if embeddings.ndim != 2:
-            logger.error(f"❌ Embeddings must be 2D array, got {embeddings.ndim}D")
-            return False
-        
-        if embeddings.shape[1] == 0:
-            logger.error("❌ Embeddings have zero dimensions")
-            return False
-        
-        # Check for NaN or infinite values
-        if np.any(np.isnan(embeddings)):
-            logger.error("❌ Embeddings contain NaN values")
-            return False
-        
-        if np.any(np.isinf(embeddings)):
-            logger.error("❌ Embeddings contain infinite values")
-            return False
+        for check, msg in checks:
+            if not check:
+                logger.error(msg)
+                return False
         
         logger.info(f"✅ Embeddings validation passed: {embeddings.shape}")
         return True
@@ -209,12 +138,7 @@ def validate_embeddings(embeddings: np.ndarray, texts: List[str]) -> bool:
 
 
 def get_device_info() -> Dict:
-    """
-    Get information about available compute devices.
-    
-    Returns:
-        Dictionary with device information
-    """
+    """Get information about available compute devices."""
     info = {
         'cuda_available': torch.cuda.is_available(),
         'device_count': torch.cuda.device_count() if torch.cuda.is_available() else 0,
@@ -225,9 +149,11 @@ def get_device_info() -> Dict:
     }
     
     if info['cuda_available']:
-        info['current_device'] = torch.cuda.current_device()
-        info['device_name'] = torch.cuda.get_device_name(0)
-        info['memory_allocated'] = torch.cuda.memory_allocated(0)
-        info['memory_reserved'] = torch.cuda.memory_reserved(0)
+        info.update({
+            'current_device': torch.cuda.current_device(),
+            'device_name': torch.cuda.get_device_name(0),
+            'memory_allocated': torch.cuda.memory_allocated(0),
+            'memory_reserved': torch.cuda.memory_reserved(0)
+        })
     
     return info 
