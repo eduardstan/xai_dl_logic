@@ -24,6 +24,9 @@ from utils import (
     get_models_dir, get_plots_dir, ensure_output_dirs
 )
 
+# Import specialized modules
+from outlier_reduction import apply_outlier_reduction
+
 # BERTopic and ML imports
 from bertopic import BERTopic
 from bertopic.vectorizers import ClassTfidfTransformer
@@ -384,133 +387,6 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
         logger.info(f"  🎯 Median cluster size: {sorted(cluster_sizes)[len(cluster_sizes)//2]}")
     
     return topics, probs
-
-
-def apply_outlier_reduction(topic_model: BERTopic, docs: List[str], topics: List[int], 
-                          probs: np.ndarray, embeddings: np.ndarray, config: Dict, 
-                          logger) -> List[int]:
-    """
-    Apply configurable outlier reduction strategies from BERTopic documentation.
-    Reference: https://maartengr.github.io/BERTopic/getting_started/outlier_reduction/outlier_reduction.html
-    
-    Args:
-        topic_model: Trained BERTopic model
-        docs: List of documents
-        topics: Original topic assignments
-        probs: Topic probabilities (if calculated)
-        embeddings: Document embeddings
-        config: Configuration dictionary
-        logger: Configured logger instance
-        
-    Returns:
-        Updated topic assignments with reduced outliers
-    """
-    outlier_config = config.get('outlier_reduction', {})
-    
-    if not outlier_config.get('enabled', False):
-        logger.info("📋 Outlier reduction disabled")
-        return topics
-    
-    logger.info("🔧 Starting outlier reduction process...")
-    
-    # Track outlier reduction progress
-    initial_outliers = sum(1 for t in topics if t == -1)
-    current_topics = topics.copy()
-    
-    strategies = outlier_config.get('strategies', [])
-    verbose = outlier_config.get('verbose', True)
-    save_intermediate = outlier_config.get('save_intermediate_results', False)
-    
-    for i, strategy_config in enumerate(strategies):
-        strategy = strategy_config.get('strategy')
-        threshold = strategy_config.get('threshold', 0.1)
-        
-        current_outliers = sum(1 for t in current_topics if t == -1)
-        if current_outliers == 0:
-            logger.info(f"✅ No outliers remaining - stopping outlier reduction")
-            break
-            
-        logger.info(f"🎯 Strategy {i+1}/{len(strategies)}: '{strategy}' (threshold={threshold})")
-        logger.info(f"   Current outliers: {current_outliers}")
-        
-        try:
-            if strategy == "c-tf-idf":
-                new_topics = topic_model.reduce_outliers(
-                    docs, current_topics, 
-                    strategy="c-tf-idf", 
-                    threshold=threshold
-                )
-                
-            elif strategy == "probabilities":
-                if probs is not None:
-                    new_topics = topic_model.reduce_outliers(
-                        docs, current_topics, 
-                        probabilities=probs,
-                        strategy="probabilities", 
-                        threshold=threshold
-                    )
-                else:
-                    logger.warning(f"   ⚠️  Probabilities not available - skipping strategy")
-                    continue
-                    
-            elif strategy == "distributions":
-                distributions_params = strategy_config.get('distributions_params', {})
-                new_topics = topic_model.reduce_outliers(
-                    docs, current_topics, 
-                    strategy="distributions",
-                    threshold=threshold
-                )
-                
-            elif strategy == "embeddings":
-                new_topics = topic_model.reduce_outliers(
-                    docs, current_topics, 
-                    strategy="embeddings",
-                    embeddings=embeddings,
-                    threshold=threshold
-                )
-                
-            else:
-                logger.warning(f"   ⚠️  Unknown strategy '{strategy}' - skipping")
-                continue
-                
-            # Update current topics and log progress
-            outliers_before = sum(1 for t in current_topics if t == -1)
-            outliers_after = sum(1 for t in new_topics if t == -1)
-            reduced = outliers_before - outliers_after
-            
-            if reduced > 0:
-                logger.info(f"   ✅ Reduced {reduced} outliers ({outliers_after} remaining)")
-                current_topics = new_topics
-                
-                if save_intermediate:
-                    # Save intermediate results for analysis
-                    timestamp = datetime.now().strftime("%H%M%S")
-                    logger.info(f"   💾 Intermediate results saved (strategy_{i+1}_{timestamp})")
-            else:
-                logger.info(f"   📋 No additional outliers reduced")
-                
-        except Exception as e:
-            logger.error(f"   ❌ Error applying strategy '{strategy}': {e}")
-            continue
-    
-    # Final summary
-    final_outliers = sum(1 for t in current_topics if t == -1)
-    total_reduced = initial_outliers - final_outliers
-    
-    if total_reduced > 0:
-        logger.info(f"🎉 Outlier reduction complete: {total_reduced} documents reassigned")
-        logger.info(f"   Before: {initial_outliers} outliers ({(initial_outliers/len(docs)*100):.1f}%)")
-        logger.info(f"   After: {final_outliers} outliers ({(final_outliers/len(docs)*100):.1f}%)")
-        
-        # Store updated topic assignments in model without changing representations
-        # This preserves the original high-quality topic names/keywords
-        logger.info("🔄 Updating topic assignments while preserving original representations...")
-        topic_model.topics_ = current_topics
-        logger.info("   ✅ Topic assignments updated (representations preserved)")
-    else:
-        logger.info("📋 No outliers were reduced")
-        
-    return current_topics
 
 
 def create_visualizations(topic_model: BERTopic, docs: List[str], 
