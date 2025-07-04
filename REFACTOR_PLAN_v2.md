@@ -45,7 +45,7 @@ merged.bib → [1] bib_analyzer.py → [2] advanced_systematic_analyzer.py → [
 **Risk**: LOW - Pure extraction
 
 **Files to create:**
-- `common.py` (≤150 lines) - Shared utilities
+- `utils.py` (≤150 lines) - Shared utilities
 
 **Functions to extract:**
 ```python
@@ -85,7 +85,7 @@ python bib_analyzer.py && python advanced_systematic_analyzer.py && python creat
 
 ```
 xai_dl_logic/
-├── 📄 common.py (≤150 lines) - Shared utilities
+├── 📄 utils.py (≤150 lines) - Shared utilities
 ├── 📄 bib_analyzer.py (≤150 lines) - Main orchestrator
 ├── 📄 bibliography.py (≤180 lines) - BIB parsing
 ├── 📄 embeddings.py (≤120 lines) - Embedding generation
