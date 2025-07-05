@@ -57,7 +57,7 @@ def parse_bib_file(file_path: str, config: Dict) -> pd.DataFrame:
         df = pd.DataFrame(bib_database.entries)
         
         # Clean and standardize data
-        df = clean_bibliography_data(df)
+        df = clean_bibliography_data(df, config)
         
         # Filter insufficient content
         df = filter_by_content_length(df, min_length=50)
@@ -72,20 +72,21 @@ def parse_bib_file(file_path: str, config: Dict) -> pd.DataFrame:
         raise
 
 
-def clean_bibliography_data(df: pd.DataFrame) -> pd.DataFrame:
+def clean_bibliography_data(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
     """
     Clean and standardize bibliography text fields.
     
     Args:
         df: Raw DataFrame from BIB parser
+        config: Configuration dictionary containing text_fields
         
     Returns:
         DataFrame with cleaned text fields and combined text column
     """
     logger.info("🧹 Cleaning bibliography data...")
     
-    # Define text fields to process
-    text_fields = ['abstract', 'title', 'keywords', 'author']
+    # Define text fields to process from config
+    text_fields = config['data']['text_fields']
     
     # Clean each text field
     for field in text_fields:

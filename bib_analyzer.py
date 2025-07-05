@@ -86,7 +86,7 @@ def parse_bib_file(file_path: str, config: Dict, logger) -> pd.DataFrame:
         df = pd.DataFrame(bib_database.entries)
         
         # Clean and standardize text fields
-        text_fields = ['abstract', 'title', 'keywords', 'author']
+        text_fields = config['data']['text_fields']
         
         for field in text_fields:
             if field in df.columns:
