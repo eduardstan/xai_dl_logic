@@ -129,7 +129,38 @@ def train_topic_model(topic_model: BERTopic, docs: List[str], embeddings: np.nda
 
 
 def main():
-    """Main execution function."""
+    """
+    Main execution function orchestrating the complete BERTopic analysis pipeline.
+    
+    This function coordinates all stages of academic bibliography analysis:
+    - Configuration loading and validation
+    - Bibliography parsing from BIB file with caching
+    - Text embedding generation with GPU optimization
+    - BERTopic model setup and training
+    - Outlier reduction for improved topic coverage
+    - Comprehensive visualization generation
+    - Results saving with scientific integrity
+    - Summary report generation
+    
+    The pipeline is designed for reproducibility and scientific rigor with:
+    - Comprehensive error handling and logging
+    - Intelligent caching for faster iterations
+    - Configurable parameters for different use cases
+    - Detailed progress tracking with emoji indicators
+    - Professional output suitable for academic publication
+    
+    Raises:
+        FileNotFoundError: If configuration or BIB file is missing
+        RuntimeError: If any pipeline stage fails critically
+        ValueError: If configuration parameters are invalid
+    
+    Note:
+        - Creates 'bertopic_analysis' output directory with structured results
+        - All intermediate results are cached for faster subsequent runs
+        - Supports both standard and guided topic modeling workflows
+        - Generates publication-ready visualizations and reports
+        - Logs all operations for transparency and debugging
+    """
     # Setup
     setup_logging()
     logger.info("Starting BERTopic analysis for academic bibliography")

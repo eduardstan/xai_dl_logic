@@ -125,7 +125,23 @@ def setup_bertopic_model(config: Dict) -> BERTopic:
 
 
 def _setup_vectorizer() -> CountVectorizer:
-    """Configure vectorizer for better academic term extraction."""
+    """
+    Configure CountVectorizer optimized for academic literature analysis.
+    
+    Returns:
+        CountVectorizer: Configured vectorizer with academic-optimized parameters:
+                        - ngram_range=(1,2): Captures both unigrams and bigrams
+                        - stop_words="english": Removes common English stop words
+                        - min_df=2: Requires terms to appear in at least 2 documents
+                        - max_df=0.95: Excludes terms appearing in >95% of documents
+                        - max_features=5000: Limits vocabulary size for efficiency
+    
+    Note:
+        - Optimized for technical/academic vocabulary extraction
+        - Balances vocabulary richness with computational efficiency
+        - Bigrams help capture academic phrases and compound terms
+        - Frequency filtering removes both rare noise and common words
+    """
     return CountVectorizer(
         ngram_range=(1, 2),
         stop_words="english",
@@ -136,7 +152,23 @@ def _setup_vectorizer() -> CountVectorizer:
 
 
 def _setup_ctfidf_transformer(config: Dict) -> ClassTfidfTransformer:
-    """Configure ClassTfidfTransformer with seed words if enabled."""
+    """
+    Configure ClassTfidfTransformer with optional seed words enhancement.
+    
+    Args:
+        config: Configuration dictionary containing domain guidance settings
+    
+    Returns:
+        ClassTfidfTransformer: Configured transformer with seed words if enabled,
+                              None if seed words are disabled or unavailable
+    
+    Note:
+        - Seed words boost importance of domain-specific terms in topic representations
+        - Multiplier controls how much seed words are emphasized (default: 2.0x)
+        - Returns None if seed words are disabled or no words provided
+        - Logs detailed information about seed words configuration
+        - Enhances topic quality by incorporating domain expertise
+    """
     domain_config = get_domain_guidance_config(config)
     seed_config = domain_config.get('seed_words', {})
     
@@ -167,7 +199,27 @@ def _setup_guided_bertopic_model(
     vectorizer_model: CountVectorizer,
     ctfidf_model: ClassTfidfTransformer
 ) -> BERTopic:
-    """Configure BERTopic model with guided topic modeling."""
+    """
+    Configure BERTopic model with guided topic modeling using predefined seed topics.
+    
+    Args:
+        config: Configuration dictionary containing guided topics settings
+        umap_model: Pre-configured UMAP dimensionality reduction model
+        hdbscan_model: Pre-configured HDBSCAN clustering model
+        vectorizer_model: Pre-configured CountVectorizer for text processing
+        ctfidf_model: Pre-configured ClassTfidfTransformer for term importance
+    
+    Returns:
+        BERTopic: Configured model with guided topic modeling enabled using
+                 predefined seed topic lists from configuration
+    
+    Note:
+        - Extracts seed topics from config['domain_guidance']['guided_topics']['topics']
+        - Each topic should have a 'seeds' list of representative terms
+        - Falls back to standard model if no valid seed topics found
+        - Logs detailed information about configured guided topics
+        - Enables more controlled and domain-specific topic discovery
+    """
     domain_config = get_domain_guidance_config(config)
     guided_config = domain_config['guided_topics']
     
@@ -199,7 +251,26 @@ def _setup_guided_bertopic_model(
 
 
 def get_model_info(topic_model: BERTopic) -> Dict:
-    """Get information about a configured BERTopic model."""
+    """
+    Get comprehensive information about a configured BERTopic model.
+    
+    Args:
+        topic_model: Configured BERTopic model instance
+    
+    Returns:
+        Dict: Complete model information including:
+              - Component presence (UMAP, HDBSCAN, vectorizer, c-tf-idf)
+              - Model configuration (probabilities, min_topic_size, verbose)
+              - Guided topic modeling status and count
+              - Boolean flags for feature availability
+    
+    Note:
+        - Useful for debugging model configuration issues
+        - Helps verify all required components are properly set up
+        - Indicates whether guided topic modeling is active
+        - Returns safe defaults for missing attributes
+        - Essential for model introspection and validation
+    """
     info = {
         'has_umap': topic_model.umap_model is not None,
         'has_hdbscan': topic_model.hdbscan_model is not None,
@@ -222,7 +293,29 @@ def get_model_info(topic_model: BERTopic) -> Dict:
 
 
 def validate_model_config(config: Dict) -> bool:
-    """Validate BERTopic model configuration."""
+    """
+    Validate BERTopic model configuration for completeness and correctness.
+    
+    Args:
+        config: Configuration dictionary to validate
+    
+    Returns:
+        bool: True if configuration is valid and complete, False otherwise
+    
+    Validation checks:
+        - Required sections: umap_params, hdbscan_params, data
+        - UMAP parameters: n_neighbors, n_components, min_dist, metric
+        - HDBSCAN parameters: min_cluster_size, metric
+        - Data parameters: min_topic_size
+        - All parameters have valid types and ranges
+    
+    Note:
+        - Logs specific validation errors for debugging
+        - Comprehensive checks prevent runtime failures
+        - Validates parameter types and reasonable ranges
+        - Essential for ensuring model can be created successfully
+        - Returns detailed error messages for missing or invalid parameters
+    """
     try:
         required_sections = [
             'umap_params', 'hdbscan_params', 'data'

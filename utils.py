@@ -511,14 +511,27 @@ def load_from_cache(cache_dir: Path, cache_name: str) -> Any:
 
 def create_timestamped_filename(prefix: str, extension: str = "csv") -> str:
     """
-    Create a timestamped filename for output files.
+    Create a timestamped filename for output files ensuring uniqueness and consistency.
     
     Args:
-        prefix: Prefix for the filename
-        extension: File extension (without dot)
+        prefix: Descriptive prefix for the filename (e.g., 'analysis_report', 'topic_info')
+        extension: File extension without dot (e.g., 'csv', 'md', 'yaml')
         
     Returns:
-        Timestamped filename string
+        str: Timestamped filename in format '{prefix}_{timestamp}.{extension}'
+             where timestamp follows YYYYMMDD_HHMMSS format
+    
+    Example:
+        >>> create_timestamped_filename("topic_analysis", "csv")
+        'topic_analysis_20240315_143022.csv'
+        >>> create_timestamped_filename("model_report", "md")
+        'model_report_20240315_143022.md'
+    
+    Note:
+        - Timestamp format ensures chronological sorting of files
+        - Guarantees unique filenames for concurrent runs
+        - Consistent with scientific file naming conventions
+        - Used throughout the pipeline for all output files
     """
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -527,14 +540,26 @@ def create_timestamped_filename(prefix: str, extension: str = "csv") -> str:
 
 def ensure_output_directories(base_dir: Union[str, Path], subdirs: list = None) -> Path:
     """
-    Ensure output directories exist, creating them if necessary.
+    Ensure output directories exist, creating them if necessary with proper permissions.
     
     Args:
-        base_dir: Base output directory
-        subdirs: List of subdirectories to create
+        base_dir: Base output directory path (created if doesn't exist)
+        subdirs: Optional list of subdirectory names to create within base_dir
+                (e.g., ['results', 'plots', 'models', 'cache'])
         
     Returns:
-        Path object for the base directory
+        Path: Path object for the base directory, guaranteed to exist
+    
+    Example:
+        >>> base = ensure_output_directories("analysis_output", ["results", "plots"])
+        >>> # Creates: analysis_output/, analysis_output/results/, analysis_output/plots/
+        
+    Note:
+        - Creates directories with parents=True for nested paths
+        - Uses exist_ok=True to avoid errors if directories already exist
+        - Ensures proper directory structure for scientific workflows
+        - Logs directory creation for transparency
+        - Returns Path object for further path operations
     """
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -549,18 +574,37 @@ def ensure_output_directories(base_dir: Union[str, Path], subdirs: list = None) 
 
 def validate_file_exists(file_path: Union[str, Path], description: str = "File") -> Path:
     """
-    Validate that a file exists and is readable.
+    Validate that a file exists, is readable, and has content with comprehensive checks.
     
     Args:
-        file_path: Path to the file to validate
-        description: Description of the file for error messages
+        file_path: Path to the file to validate (string or Path object)
+        description: Descriptive name for the file type used in error messages
+                    (e.g., "Configuration file", "Bibliography file", "Model file")
         
     Returns:
-        Path object for the validated file
+        Path: Validated Path object for the file, guaranteed to exist and be readable
         
     Raises:
-        FileNotFoundError: If file doesn't exist
-        PermissionError: If file isn't readable
+        FileNotFoundError: If file doesn't exist at the specified path
+        ValueError: If path points to a directory or file is empty
+        PermissionError: If file exists but isn't readable due to permissions
+    
+    Validation checks:
+        - File existence at specified path
+        - Path points to a file (not directory)
+        - File has non-zero size (not empty)
+        - File is readable with current permissions
+    
+    Example:
+        >>> config_path = validate_file_exists("config.yaml", "Configuration file")
+        >>> bib_path = validate_file_exists("data.bib", "Bibliography file")
+        
+    Note:
+        - Essential for preventing runtime errors in file processing
+        - Provides clear, descriptive error messages for debugging
+        - Logs successful validation for transparency
+        - Used throughout pipeline for input validation
+        - Converts string paths to Path objects for consistency
     """
     path = Path(file_path)
     
