@@ -11,7 +11,7 @@ from typing import Dict, List
 from sklearn.metrics.pairwise import cosine_similarity
 from loguru import logger
 
-from utils import get_systematic_review_config
+from utils import get_systematic_review_config, get_random_seed
 
 
 def select_diverse_representatives(cluster_embeddings: np.ndarray, n_select: int, config: Dict) -> List[int]:
@@ -153,7 +153,8 @@ def _iterative_selection(cluster_embeddings: np.ndarray, n_select: int,
                 selected = [valid_centralities[0][0]]
             else:
                 # Random initialization for other iterations
-                np.random.seed(42 + iteration)  # Reproducible randomness
+                base_seed = get_random_seed(config)
+                np.random.seed(base_seed + iteration)  # Reproducible randomness with config seed
                 selected = [np.random.choice(valid_indices)]
             
             # Build selection iteratively
