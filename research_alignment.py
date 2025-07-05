@@ -21,8 +21,7 @@ def analyze_research_alignment(text: str, config: Dict) -> Dict[str, float]:
     
     Args:
         text: Input text to analyze (typically combined title + abstract + keywords)
-        config: Configuration dictionary containing systematic review settings with
-               research_keywords section defining category-specific terms
+        config: Configuration dictionary containing systematic review settings
         
     Returns:
         Dict[str, float]: Alignment scores for each research category where:
