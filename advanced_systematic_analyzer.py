@@ -23,6 +23,9 @@ from datetime import datetime
 # Import extracted research alignment functionality
 from research_alignment import analyze_research_alignment
 
+# Import extracted cluster analysis functionality
+from cluster_analysis import calculate_cluster_size_category, determine_papers_to_select
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -117,63 +120,7 @@ class AdvancedSystematicAnalyzer:
             logger.error(f"❌ Error loading analysis results: {e}")
             raise
     
-    def calculate_cluster_size_category(self, cluster_size: int) -> str:
-        """Determine cluster size category based on thresholds."""
-        thresholds = self.review_config['cluster_thresholds']
-        
-        if cluster_size <= thresholds['small']:
-            return 'small'
-        elif cluster_size <= thresholds['medium']:
-            return 'medium'
-        elif cluster_size <= thresholds['large']:
-            return 'large'
-        elif cluster_size <= thresholds['xlarge']:
-            return 'xlarge'
-        elif cluster_size <= thresholds['xxlarge']:
-            return 'xxlarge'
-        else:
-            return 'xxxlarge'
-    
-    def determine_papers_to_select(self, cluster_size: int) -> int:
-        """Determine how many papers to select based on cluster size and selection strategy."""
-        selection_strategy = self.review_config.get('selection_strategy_type', 'threshold_based')
-        
-        if selection_strategy == 'ratio_based':
-            return self._determine_papers_ratio_based(cluster_size)
-        else:
-            return self._determine_papers_threshold_based(cluster_size)
-    
-    def _determine_papers_threshold_based(self, cluster_size: int) -> int:
-        """Original threshold-based paper selection."""
-        base = self.review_config['base_papers_per_cluster']
-        max_papers = self.review_config['max_papers_per_cluster']
-        category = self.calculate_cluster_size_category(cluster_size)
-        
-        size_mapping = {
-            'small': base,
-            'medium': base + 1,
-            'large': base + 2,
-            'xlarge': base + 3,
-            'xxlarge': base + 4,
-            'xxxlarge': max_papers
-        }
-        
-        return min(size_mapping[category], cluster_size)
-    
-    def _determine_papers_ratio_based(self, cluster_size: int) -> int:
-        """New ratio-based paper selection for more uniform sampling."""
-        target_ratio = self.review_config.get('target_selection_ratio', 0.15)  # Default 15%
-        min_papers = self.review_config.get('min_papers_per_cluster', 2)
-        max_papers = self.review_config.get('max_papers_per_cluster', 10)
-        
-        # Calculate papers based on ratio
-        ratio_papers = max(1, int(cluster_size * target_ratio))
-        
-        # Apply min/max constraints
-        selected_papers = min(max(ratio_papers, min_papers), max_papers)
-        
-        # Ensure we don't select more papers than exist in the cluster
-        return min(selected_papers, cluster_size)
+
     
     def compute_paper_metrics(self, paper_embeddings: np.ndarray, cluster_embeddings: np.ndarray) -> Dict[str, float]:
         """Compute comprehensive metrics for a paper within its cluster."""
@@ -446,7 +393,7 @@ class AdvancedSystematicAnalyzer:
                 topic_documents = [documents[i] for i in topic_indices]
             
             cluster_size = len(topic_documents)
-            n_select = self.determine_papers_to_select(cluster_size)
+            n_select = determine_papers_to_select(cluster_size, self.config)
             
             logger.info(f"📊 Topic {topic_id}: {cluster_size} papers → selecting {n_select} representatives")
             
@@ -543,7 +490,7 @@ class AdvancedSystematicAnalyzer:
                 'topic_id': topic_id,
                 'topic_name': topic_name,
                 'cluster_size': cluster_size,
-                'size_category': self.calculate_cluster_size_category(cluster_size),
+                'size_category': calculate_cluster_size_category(cluster_size, self.config),
                 'papers_selected': n_select,
                 'selection_ratio': n_select / cluster_size,
                 'avg_centrality': np.mean([r['similarity_to_centroid'] 
