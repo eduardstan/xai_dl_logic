@@ -16,7 +16,51 @@ from utils import cache_exists, load_from_cache, save_to_cache, get_cache_dir, g
 
 
 def prepare_embeddings(texts: List[str], config: Dict) -> np.ndarray:
-    """Generate embeddings using sentence transformers with caching and GPU optimization."""
+    """
+    Generate high-quality text embeddings using sentence transformers with intelligent caching.
+    
+    This function handles the complete embedding pipeline including:
+    - Intelligent caching based on model and document hash
+    - GPU optimization and memory management
+    - Batch processing for large document collections
+    - Comprehensive error handling and logging
+    
+    Args:
+        texts: List of text documents to embed. Each document should be a string
+               containing the preprocessed text content (typically combined title,
+               abstract, and keywords for academic papers).
+        config: Configuration dictionary containing embedding model settings.
+                Expected keys:
+                - 'embedding_model': Dict with model configuration
+                  - 'name': Model name (e.g., 'all-MiniLM-L6-v2')
+                  - 'batch_size': Processing batch size (default: 64)
+                  - 'show_progress': Whether to show progress bar (default: True)
+                - 'output': Dict with cache directory settings
+                  - 'cache_dir': Directory for caching embeddings
+    
+    Returns:
+        np.ndarray: Dense embedding matrix of shape (n_documents, embedding_dim).
+                   Each row represents one document's embedding vector.
+                   Typical dimensions: (n_docs, 384) for MiniLM models.
+    
+    Raises:
+        RuntimeError: If embedding model cannot be loaded or computation fails
+        FileNotFoundError: If cache directory cannot be created
+        ValueError: If texts list is empty or contains invalid content
+    
+    Example:
+        >>> texts = ["Machine learning paper about transformers", "Deep learning research"]
+        >>> config = {'embedding_model': {'name': 'all-MiniLM-L6-v2'}, 'output': {'cache_dir': 'cache'}}
+        >>> embeddings = prepare_embeddings(texts, config)
+        >>> embeddings.shape
+        (2, 384)
+    
+    Note:
+        - Embeddings are automatically cached for faster subsequent runs
+        - GPU acceleration is used when available with automatic fallback to CPU
+        - Memory usage is optimized through batch processing and cleanup
+        - Cache keys include model name and document hash for validity
+    """
     model_config = get_embedding_config(config)
     
     # Create embedding cache key based on model and documents
@@ -45,7 +89,36 @@ def prepare_embeddings(texts: List[str], config: Dict) -> np.ndarray:
 
 
 def _compute_embeddings(texts: List[str], model_config: Dict) -> np.ndarray:
-    """Compute embeddings with GPU optimization and memory management."""
+    """
+    Internal function to compute embeddings with GPU optimization and memory management.
+    
+    This function handles the actual embedding computation including:
+    - Automatic GPU/CPU device detection and configuration
+    - Dynamic batch size optimization based on available hardware
+    - Comprehensive error handling for model loading and computation
+    - Memory cleanup after GPU operations
+    - Progress tracking for large document collections
+    
+    Args:
+        texts: List of text documents to embed, already preprocessed
+        model_config: Embedding model configuration dict containing:
+                     - 'name': Sentence transformer model name
+                     - 'batch_size': Base batch size for processing
+                     - 'show_progress': Whether to display progress bar
+    
+    Returns:
+        np.ndarray: Dense embedding matrix of shape (n_documents, embedding_dim)
+    
+    Raises:
+        RuntimeError: If model loading fails or embedding computation encounters errors
+        MemoryError: If insufficient GPU/CPU memory for the operation
+    
+    Note:
+        - GPU batch size is automatically doubled when CUDA is available
+        - Memory is cleaned up after GPU operations to prevent accumulation
+        - Progress bar is shown for collections over 1000 documents
+        - Model is loaded fresh each time to ensure clean state
+    """
     # Detect and configure device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size = _get_optimal_batch_size(model_config, device)

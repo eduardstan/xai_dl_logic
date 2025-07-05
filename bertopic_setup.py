@@ -22,7 +22,65 @@ from utils import (
 
 
 def setup_bertopic_model(config: Dict) -> BERTopic:
-    """Configure BERTopic model with optimized parameters for academic text."""
+    """
+    Configure and initialize a BERTopic model optimized for academic literature analysis.
+    
+    This function creates a fully configured BERTopic model with academic-optimized parameters
+    including dimensionality reduction (UMAP), clustering (HDBSCAN), vectorization, and
+    optional guided topic modeling. All parameters are derived from the configuration to
+    ensure reproducible and tunable topic modeling.
+    
+    Args:
+        config: Configuration dictionary containing model parameters.
+                Expected structure:
+                - 'umap_params': Dict with UMAP configuration
+                  - 'n_neighbors': Number of neighbors for UMAP (default: 15)
+                  - 'n_components': Dimensionality of UMAP output (default: 128)
+                  - 'min_dist': Minimum distance in UMAP embedding (default: 0.0)
+                  - 'metric': Distance metric ('cosine' recommended for text)
+                  - 'random_state': Random seed for reproducibility
+                - 'hdbscan_params': Dict with HDBSCAN clustering configuration
+                  - 'min_cluster_size': Minimum cluster size (default: 16)
+                  - 'max_cluster_size': Maximum cluster size (optional)
+                  - 'metric': Distance metric for clustering
+                  - 'cluster_selection_method': Method for cluster selection
+                - 'data': Dict with BERTopic data parameters
+                  - 'min_topic_size': Minimum documents per topic
+                  - 'calculate_probabilities': Whether to compute topic probabilities
+                - 'domain_guidance': Dict with optional guided topic modeling
+                  - 'guided_topics': Configuration for seed-based topic guidance
+                  - 'seed_words': Domain-specific terms for topic enhancement
+    
+    Returns:
+        BERTopic: Fully configured BERTopic model ready for training.
+                 The model includes:
+                 - UMAP for dimensionality reduction optimized for academic text
+                 - HDBSCAN for density-based clustering
+                 - Academic-optimized CountVectorizer (1-2 grams, English stopwords)
+                 - Optional ClassTfidfTransformer with seed word enhancement
+                 - Optional guided topic modeling with predefined seed topics
+    
+    Raises:
+        KeyError: If required configuration sections are missing
+        ValueError: If configuration parameters are invalid
+        ImportError: If required dependencies (UMAP, HDBSCAN) are not available
+    
+    Example:
+        >>> config = {
+        ...     'umap_params': {'n_neighbors': 15, 'n_components': 128},
+        ...     'hdbscan_params': {'min_cluster_size': 16},
+        ...     'data': {'min_topic_size': 10, 'calculate_probabilities': True}
+        ... }
+        >>> model = setup_bertopic_model(config)
+        >>> isinstance(model, BERTopic)
+        True
+    
+    Note:
+        - Model configuration is logged for transparency and reproducibility
+        - Guided topic modeling is automatically enabled if seed topics are provided
+        - All parameters are validated before model creation
+        - The model supports both standard and guided topic modeling workflows
+    """
     logger.info("🔧 Setting up BERTopic model with custom parameters")
     
     # Configure UMAP for dimensionality reduction

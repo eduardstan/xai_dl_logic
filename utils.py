@@ -93,37 +93,121 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
 # === Config Helper Functions ===
 
 def get_cache_dir(config: Dict[str, Any]) -> Path:
-    """Get cache directory path from config."""
+    """
+    Extract cache directory path from configuration.
+    
+    Args:
+        config: Configuration dictionary containing output settings
+    
+    Returns:
+        Path: Absolute or relative path to cache directory for storing
+              temporary files, embeddings, and processed data
+    
+    Raises:
+        KeyError: If 'output.cache_dir' key is missing from config
+    """
     return Path(config['output']['cache_dir'])
 
 
 def get_results_dir(config: Dict[str, Any]) -> Path:
-    """Get results directory path from config."""
+    """
+    Extract results directory path from configuration.
+    
+    Args:
+        config: Configuration dictionary containing output settings
+    
+    Returns:
+        Path: Absolute or relative path to results directory for storing
+              final analysis outputs, CSV files, and reports
+    
+    Raises:
+        KeyError: If 'output.results_dir' key is missing from config
+    """
     return Path(config['output']['results_dir'])
 
 
 def get_models_dir(config: Dict[str, Any]) -> Path:
-    """Get models directory path from config."""
+    """
+    Extract models directory path from configuration.
+    
+    Args:
+        config: Configuration dictionary containing output settings
+    
+    Returns:
+        Path: Absolute or relative path to models directory for storing
+              trained BERTopic models and related artifacts
+    
+    Raises:
+        KeyError: If 'output.models_dir' key is missing from config
+    """
     return Path(config['output']['models_dir'])
 
 
 def get_plots_dir(config: Dict[str, Any]) -> Path:
-    """Get plots directory path from config."""
+    """
+    Extract plots directory path from configuration.
+    
+    Args:
+        config: Configuration dictionary containing output settings
+    
+    Returns:
+        Path: Absolute or relative path to plots directory for storing
+              visualizations, interactive plots, and figures
+    
+    Raises:
+        KeyError: If 'output.plots_dir' key is missing from config
+    """
     return Path(config['output']['plots_dir'])
 
 
 def get_embedding_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get embedding model configuration section."""
+    """
+    Extract embedding model configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing embedding model settings
+    
+    Returns:
+        Dict: Embedding model configuration including model name, batch size,
+              and other model-specific parameters for sentence transformers
+    
+    Raises:
+        KeyError: If 'embedding_model' key is missing from config
+    """
     return config['embedding_model']
 
 
 def get_umap_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get UMAP parameters configuration section."""
+    """
+    Extract UMAP dimensionality reduction parameters from config.
+    
+    Args:
+        config: Configuration dictionary containing UMAP settings
+    
+    Returns:
+        Dict: UMAP parameters including n_neighbors, n_components, min_dist,
+              metric, and random_state for reproducible dimensionality reduction
+    
+    Raises:
+        KeyError: If 'umap_params' key is missing from config
+    """
     return config['umap_params']
 
 
 def get_hdbscan_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get HDBSCAN parameters configuration section."""
+    """
+    Extract HDBSCAN clustering parameters from config.
+    
+    Args:
+        config: Configuration dictionary containing HDBSCAN settings
+    
+    Returns:
+        Dict: HDBSCAN parameters including min_cluster_size, max_cluster_size,
+              metric, and cluster_selection_method for density-based clustering
+    
+    Raises:
+        KeyError: If 'hdbscan_params' key is missing from config
+    """
     return config['hdbscan_params']
 
 

@@ -33,18 +33,53 @@ warnings.filterwarnings("ignore", category=UserWarning)
 def train_topic_model(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
                      config: Dict, logger) -> Tuple[List[int], np.ndarray]:
     """
-    Train the BERTopic model with pre-computed embeddings.
-    Includes post-training outlier reduction following BERTopic best practices.
+    Train the BERTopic model and apply outlier reduction for optimal topic coverage.
+    
+    This function orchestrates the complete topic modeling pipeline including:
+    - Training the BERTopic model using pre-computed embeddings
+    - Comprehensive logging of initial topic discovery results
+    - Configurable outlier reduction using multiple strategies
+    - Detailed analysis of cluster size distribution
+    - Preservation of high-quality topic representations
     
     Args:
-        topic_model: Configured BERTopic model
-        docs: List of documents
-        embeddings: Pre-computed document embeddings
-        config: Configuration dictionary
-        logger: Configured logger instance
+        topic_model: Pre-configured BERTopic model with UMAP, HDBSCAN, and
+                    vectorizer components already set up for academic text analysis
+        docs: List of document texts to analyze. Should be preprocessed and
+              cleaned text (typically combined title + abstract + keywords)
+        embeddings: Pre-computed document embeddings matrix of shape (n_docs, embedding_dim).
+                   Must correspond exactly to the docs list order
+        config: Configuration dictionary containing model and outlier reduction settings.
+                Expected keys:
+                - 'outlier_reduction': Dict with outlier reduction configuration
+                - 'data': Dict with topic modeling parameters
+                - 'random_seed': Integer for reproducibility
+        logger: Configured logger instance for comprehensive progress tracking
         
     Returns:
-        Tuple of (topics, probabilities)
+        Tuple[List[int], np.ndarray]: A tuple containing:
+            - topics: List of topic assignments for each document. 
+                     Topic IDs are integers (0, 1, 2, ...) with -1 for outliers
+            - probs: Topic probability matrix of shape (n_docs, n_topics) if
+                    calculate_probabilities=True, otherwise None
+    
+    Raises:
+        RuntimeError: If topic model training fails
+        ValueError: If embeddings and docs have mismatched lengths
+        KeyError: If required configuration keys are missing
+    
+    Example:
+        >>> # Assuming model, docs, embeddings, and config are prepared
+        >>> topics, probs = train_topic_model(model, docs, embeddings, config, logger)
+        >>> print(f"Discovered {len(set(topics))} topics with {topics.count(-1)} outliers")
+        Discovered 56 topics with 0 outliers
+    
+    Note:
+        - Outlier reduction strategies are applied sequentially if enabled
+        - Original topic representations are preserved during outlier reduction
+        - Detailed cluster statistics are logged for analysis
+        - Function supports both probability and non-probability modes
+        - All operations are logged with emoji indicators for easy monitoring
     """
     logger.info("🚀 Training BERTopic model with pre-computed embeddings")
     
