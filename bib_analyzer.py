@@ -30,6 +30,7 @@ from loguru import logger
 # Import specialized modules
 from outlier_reduction import apply_outlier_reduction
 from visualization import create_visualizations
+from results_saver import save_results, generate_summary_report
 
 # BERTopic and ML imports
 from bertopic import BERTopic
@@ -393,90 +394,6 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
     return topics, probs
 
 
-def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
-                probs: np.ndarray, embeddings: np.ndarray,
-                config: Dict, output_dir: str, logger) -> None:
-    """
-    Save analysis results and model artifacts with consistent topic assignments.
-    Now generates topic_info from updated topics for consistency.
-    
-    Args:
-        topic_model: Trained BERTopic model
-        df: Original DataFrame with bibliography data
-        topics: Updated topic assignments (post-outlier reduction)
-        probs: Topic probabilities
-        embeddings: Document embeddings
-        config: Configuration dictionary
-        output_dir: Output directory
-        logger: Configured logger instance
-    """
-    logger.info("💾 Saving analysis results with consistent topic assignments")
-    
-    # Create output directories
-    results_dir = Path(output_dir) / get_results_dir(config)
-    models_dir = Path(output_dir) / get_models_dir(config)
-    
-    for directory in [results_dir, models_dir]:
-        directory.mkdir(parents=True, exist_ok=True)
-    
-    # Add topic information to DataFrame
-    df_results = df.copy()
-    df_results['topic'] = topics
-    if probs is not None and len(probs.shape) > 1:
-        df_results['topic_probability'] = probs.max(axis=1)
-    else:
-        df_results['topic_probability'] = None
-    
-    # Get topic information from model (now has preserved representations with updated assignments)
-    topic_info = topic_model.get_topic_info()
-    
-    # Update the Count column to reflect actual post-outlier reduction document counts
-    outlier_reduction_enabled = config.get('outlier_reduction', {}).get('enabled', False)
-    if outlier_reduction_enabled:
-        logger.info("📊 Updating topic counts to reflect post-outlier reduction assignments...")
-        from collections import Counter
-        topic_counts = Counter(topics)
-        
-        # Update the Count column with actual counts
-        for idx, row in topic_info.iterrows():
-            topic_id = row['Topic']
-            actual_count = topic_counts.get(topic_id, 0)
-            topic_info.at[idx, 'Count'] = actual_count
-        
-        # Re-sort by count (descending)
-        topic_info = topic_info.sort_values('Count', ascending=False).reset_index(drop=True)
-    
-    # Save results
-    timestamp = datetime.now().strftime(config['timestamp_format'])
-    
-    # Save enhanced DataFrame (uses updated topics)
-    df_results.to_csv(results_dir / f"bibliography_with_topics_{timestamp}.csv", index=False)
-    
-    # Save topic information (now consistent with updated topics)
-    topic_info.to_csv(results_dir / f"topic_info_{timestamp}.csv", index=False)
-    
-    # Save versioned artifacts for scientific integrity
-    if outlier_reduction_enabled:
-        # Save original model topic info for comparison
-        original_topic_info = topic_model.get_topic_info()
-        original_topic_info.to_csv(results_dir / f"topic_info_pre_outlier_reduction_{timestamp}.csv", index=False)
-        logger.info(f"📋 Saved pre-outlier reduction topic info for comparison")
-    
-    # Save model artifacts if configured
-    if config['output']['save_model']:
-        topic_model.save(str(models_dir / f"bertopic_model_{timestamp}"))
-    
-    if config['output']['save_embeddings']:
-        np.save(results_dir / f"embeddings_{timestamp}.npy", embeddings)
-    
-    # Save configuration used
-    with open(results_dir / f"config_used_{timestamp}.yaml", 'w') as f:
-        yaml.dump(config, f, default_flow_style=False)
-    
-    logger.info(f"✅ Results saved to: {results_dir}")
-    logger.info(f"📁 Model artifacts saved to: {models_dir}")
-
-
 def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataFrame, 
                                         logger) -> pd.DataFrame:
     """
@@ -533,112 +450,6 @@ def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataF
     return topic_info_df
 
 
-def generate_summary_report(topic_model: BERTopic, df: pd.DataFrame,
-                          topics: List[int], config: Dict,
-                          output_dir: str, logger) -> None:
-    """
-    Generate a summary report of the analysis using updated topic assignments.
-    
-    Args:
-        topic_model: Trained BERTopic model
-        df: DataFrame with results
-        topics: Updated topic assignments (post-outlier reduction)
-        config: Configuration dictionary
-        output_dir: Output directory
-        logger: Configured logger instance
-    """
-    logger.info("📋 Generating summary report with updated topic assignments")
-    
-    results_dir = Path(output_dir) / get_results_dir(config)
-    
-    # Basic statistics using updated topics
-    n_documents = len(topics)
-    n_topics = len(set(topics)) - (1 if -1 in topics else 0)
-    n_outliers = sum(1 for t in topics if t == -1)
-    
-    # Get topic information - model now has preserved representations with updated counts
-    topic_info = topic_model.get_topic_info()
-    
-    # Ensure topic counts reflect actual post-outlier reduction assignments
-    outlier_reduction_enabled = config.get('outlier_reduction', {}).get('enabled', False)
-    if outlier_reduction_enabled:
-        from collections import Counter
-        topic_counts = Counter(topics)
-        topic_sizes = [(topic_id, count) for topic_id, count in topic_counts.items() if topic_id != -1]
-        topic_sizes.sort(key=lambda x: -x[1])  # Sort by size descending
-    else:
-        topic_sizes = [(row['Topic'], row['Count']) for _, row in topic_info.iterrows() if row['Topic'] != -1]
-    
-    # Create summary report
-    report = f"""
-# BERTopic Analysis Summary Report (Updated Topic Assignments)
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-## Dataset Overview
-- Total documents processed: {n_documents:,}
-- Documents with sufficient content: {len(df):,}
-- Topics discovered: {n_topics}
-- Outlier documents: {n_outliers}
-- Coverage: {((n_documents - n_outliers) / n_documents * 100):.1f}%
-
-## Model Configuration
-- Embedding model: {config['embedding_model']['name']}
-- UMAP neighbors: {config['umap_params']['n_neighbors']}
-- HDBSCAN min cluster size: {config['hdbscan_params']['min_cluster_size']}
-- Min topic size: {config['data']['min_topic_size']}"""
-    
-    # Add outlier reduction information
-    if outlier_reduction_enabled:
-        strategies = config.get('outlier_reduction', {}).get('strategies', [])
-        strategy_names = [s.get('strategy', 'unknown') for s in strategies]
-        report += f"""
-- Outlier reduction: ENABLED
-- Strategies used: {', '.join(strategy_names)}
-- Topic representations: PRESERVED (original high-quality names maintained)"""
-    else:
-        report += f"""
-- Outlier reduction: DISABLED"""
-    
-    # Add guided topics information if enabled
-    guided_config = config.get('domain_guidance', {}).get('guided_topics', {})
-    if guided_config.get('enabled', False):
-        report += f"""
-- Guided topic modeling: ENABLED
-- Number of guided topics: {len(guided_config.get('topics', {}))}"""
-    else:
-        report += f"""
-- Guided topic modeling: DISABLED"""
-    
-    # Add seed words information if enabled
-    seed_config = config.get('domain_guidance', {}).get('seed_words', {})
-    if seed_config.get('enabled', False):
-        report += f"""
-- Seed words enhancement: ENABLED
-- Seed multiplier: {seed_config.get('multiplier', 2.0)}x
-- Number of seed words: {len(seed_config.get('words', []))}"""
-    else:
-        report += f"""
-- Seed words enhancement: DISABLED"""
-    
-    report += f"""
-
-## Top 10 Topics by Size (Using Updated Assignments)
-"""
-    
-    # Add top topics to report using updated assignments
-    for i, (topic_id, count) in enumerate(topic_sizes[:10]):
-        report += f"{topic_id:2d}. ({count:3d} docs) Topic {topic_id}\n"
-    
-    # Save report
-    timestamp = datetime.now().strftime(config['timestamp_format'])
-    report_filename = f"analysis_summary_{timestamp}.md"
-    with open(results_dir / report_filename, 'w') as f:
-        f.write(report)
-    
-    logger.info(f"✅ Summary report generated: {report_filename}")
-    print(report)  # Also display in console
-
-
 def main():
     """Main execution function."""
     # Setup
@@ -676,10 +487,10 @@ def main():
         create_visualizations(topic_model, docs, embeddings, topics, config, output_dir)
         
         # Save results
-        save_results(topic_model, df, topics, probs, embeddings, config, output_dir, logger)
+        save_results(topic_model, df, topics, probs, embeddings, config, output_dir)
         
         # Generate summary report
-        generate_summary_report(topic_model, df, topics, config, output_dir, logger)
+        generate_summary_report(topic_model, df, topics, config, output_dir)
         
         logger.info("Analysis completed successfully!")
         print(f"\n✅ Analysis complete! Check the '{output_dir}' directory for results.")

@@ -157,6 +157,11 @@ def get_timestamp_format(config: Dict[str, Any]) -> str:
     return config.get('timestamp_format', '%Y%m%d_%H%M%S')
 
 
+def get_output_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get output configuration section from config."""
+    return config.get('output', {})
+
+
 def ensure_output_dirs(config: Dict[str, Any], base_dir: Optional[Union[str, Path]] = None) -> Dict[str, Path]:
     """
     Ensure all output directories exist and return path dictionary.
