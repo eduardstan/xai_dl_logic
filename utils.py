@@ -212,37 +212,133 @@ def get_hdbscan_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def get_visualization_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get visualization configuration section."""
+    """
+    Extract visualization configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing visualization settings
+    
+    Returns:
+        Dict: Visualization configuration including plot settings, interactive options,
+              and DataMapPlot parameters for generating topic visualizations
+    
+    Raises:
+        KeyError: If visualization section is missing from config
+    """
     return config['visualization']
 
 
 def get_systematic_review_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get systematic review configuration section."""
+    """
+    Extract systematic review configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing systematic review settings
+    
+    Returns:
+        Dict: Systematic review configuration including selection criteria,
+              filtering parameters, and analysis thresholds
+    
+    Raises:
+        KeyError: If systematic_review section is missing from config
+    """
     return config['systematic_review']
 
 
 def get_outlier_reduction_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get outlier reduction configuration section."""
+    """
+    Extract outlier reduction configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing outlier reduction settings
+    
+    Returns:
+        Dict: Outlier reduction configuration including strategies, thresholds,
+              and parameters for BERTopic outlier reduction methods.
+              Returns empty dict if section is missing.
+    
+    Note:
+        - Returns empty dict if 'outlier_reduction' section is not present
+        - Supports multiple strategies: c-tf-idf, probabilities, distributions, embeddings
+        - Each strategy has configurable threshold and parameters
+    """
     return config.get('outlier_reduction', {})
 
 
 def get_domain_guidance_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get domain guidance configuration section."""
+    """
+    Extract domain guidance configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing domain guidance settings
+    
+    Returns:
+        Dict: Domain guidance configuration including guided topics, seed words,
+              and domain-specific topic modeling parameters.
+              Returns empty dict if section is missing.
+    
+    Note:
+        - Returns empty dict if 'domain_guidance' section is not present
+        - Supports guided topic modeling with predefined seed topics
+        - Includes seed words enhancement for c-tf-idf transformer
+    """
     return config.get('domain_guidance', {})
 
 
 def get_random_seed(config: Dict[str, Any]) -> int:
-    """Get random seed for reproducibility."""
+    """
+    Extract random seed for reproducibility from config.
+    
+    Args:
+        config: Configuration dictionary containing random seed setting
+    
+    Returns:
+        int: Random seed value for ensuring reproducible results across
+             UMAP, HDBSCAN, and other stochastic algorithms. Defaults to 42.
+    
+    Note:
+        - Returns 42 if 'random_seed' is not specified in config
+        - Used for UMAP, HDBSCAN, and other random operations
+        - Essential for scientific reproducibility
+    """
     return config.get('random_seed', 42)
 
 
 def get_timestamp_format(config: Dict[str, Any]) -> str:
-    """Get timestamp format string."""
+    """
+    Extract timestamp format string from config.
+    
+    Args:
+        config: Configuration dictionary containing timestamp format setting
+    
+    Returns:
+        str: Timestamp format string for generating consistent timestamps
+             in output files and logs. Defaults to '%Y%m%d_%H%M%S'.
+    
+    Note:
+        - Returns '%Y%m%d_%H%M%S' if 'timestamp_format' is not specified
+        - Used for creating unique filenames and timestamps
+        - Format: YYYYMMDD_HHMMSS (e.g., 20240315_143022)
+    """
     return config.get('timestamp_format', '%Y%m%d_%H%M%S')
 
 
 def get_output_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Get output configuration section from config."""
+    """
+    Extract output configuration section from config.
+    
+    Args:
+        config: Configuration dictionary containing output settings
+    
+    Returns:
+        Dict: Output configuration including directory paths, file saving options,
+              and model artifact settings. Returns empty dict if section is missing.
+    
+    Note:
+        - Returns empty dict if 'output' section is not present
+        - Contains paths for results, models, cache, and plots directories
+        - Includes flags for saving models and embeddings
+    """
     return config.get('output', {})
 
 

@@ -160,13 +160,48 @@ def _compute_embeddings(texts: List[str], model_config: Dict) -> np.ndarray:
 
 
 def _get_optimal_batch_size(model_config: Dict, device: str) -> int:
-    """Determine optimal batch size based on device and configuration."""
+    """
+    Determine optimal batch size based on device capabilities and configuration.
+    
+    Args:
+        model_config: Embedding model configuration containing base batch size
+        device: Target device ("cuda" or "cpu")
+    
+    Returns:
+        int: Optimized batch size for the specified device.
+             GPU batch size is doubled up to 128, CPU uses base size.
+    
+    Note:
+        - GPU processing can handle larger batches more efficiently
+        - Capped at 128 to prevent memory issues on smaller GPUs
+        - CPU processing uses conservative batch sizes
+    """
     base_batch_size = model_config.get('batch_size', 64)
     return min(base_batch_size * 2, 128) if device == "cuda" else base_batch_size
 
 
 def get_embedding_cache_info(texts: List[str], config: Dict) -> Dict:
-    """Get information about embedding cache status."""
+    """
+    Get comprehensive information about embedding cache status and metadata.
+    
+    Args:
+        texts: List of documents to be embedded
+        config: Configuration dictionary containing embedding and cache settings
+    
+    Returns:
+        Dict: Complete cache information including:
+              - cache_name: Generated cache filename
+              - cache_path: Full path to cache file
+              - exists: Whether cache file exists
+              - model_name: Embedding model name
+              - docs_hash: Short hash of document content
+              - num_documents: Number of documents
+    
+    Note:
+        - Cache key is generated from model name and document content hash
+        - Used for cache validation and debugging
+        - Helps identify cache misses and invalidations
+    """
     model_config = get_embedding_config(config)
     docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
     model_name = model_config['name']
@@ -186,7 +221,28 @@ def get_embedding_cache_info(texts: List[str], config: Dict) -> Dict:
 
 
 def validate_embeddings(embeddings: np.ndarray, texts: List[str]) -> bool:
-    """Validate that embeddings are properly formed."""
+    """
+    Validate embedding matrix for correctness and quality.
+    
+    Args:
+        embeddings: Numpy array of document embeddings
+        texts: Original list of documents
+    
+    Returns:
+        bool: True if embeddings pass all validation checks, False otherwise
+    
+    Validation checks:
+        - Correct numpy array format
+        - Proper dimensionality (2D matrix)
+        - Size consistency with input documents
+        - No NaN or infinite values
+        - Non-zero embedding dimensions
+    
+    Note:
+        - Logs specific validation failures for debugging
+        - Essential for ensuring embedding quality before topic modeling
+        - Helps identify model loading or computation issues
+    """
     try:
         checks = [
             (isinstance(embeddings, np.ndarray), "❌ Embeddings must be numpy array"),
@@ -211,7 +267,23 @@ def validate_embeddings(embeddings: np.ndarray, texts: List[str]) -> bool:
 
 
 def get_device_info() -> Dict:
-    """Get information about available compute devices."""
+    """
+    Get comprehensive information about available compute devices.
+    
+    Returns:
+        Dict: Complete device information including:
+              - cuda_available: Whether CUDA is available
+              - device_count: Number of GPU devices
+              - current_device: Current GPU device index
+              - device_name: Name of the GPU device
+              - memory_allocated: Currently allocated GPU memory
+              - memory_reserved: Reserved GPU memory
+    
+    Note:
+        - Returns None values for GPU-specific info when CUDA unavailable
+        - Useful for debugging device issues and memory management
+        - Helps optimize batch sizes and memory usage
+    """
     info = {
         'cuda_available': torch.cuda.is_available(),
         'device_count': torch.cuda.device_count() if torch.cuda.is_available() else 0,
