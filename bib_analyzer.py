@@ -1,334 +1,33 @@
 #!/usr/bin/env python3
 """
-BERTopic Analysis for Academic Bibliography
-Following best practices for topic modeling on academic literature.
+BERTopic Analysis for Academic Bibliography - Main Orchestrator
+Streamlined main script that coordinates the analysis pipeline.
 """
 
-import os
-import pickle
 import warnings
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Dict, List, Tuple
 
-import yaml
-import pandas as pd
 import numpy as np
-import bibtexparser
-from bibtexparser.bparser import BibTexParser
-
-# Import shared utilities
-from utils import (
-    setup_logging, load_config, get_file_hash, cache_exists, 
-    save_to_cache, load_from_cache, get_cache_dir, get_results_dir,
-    get_models_dir, get_plots_dir, ensure_output_dirs
-)
-
-# Import loguru logger
 from loguru import logger
 
+# Import shared utilities
+from utils import setup_logging, load_config
+
 # Import specialized modules
+from bibliography import parse_bib_file
+from embeddings import prepare_embeddings
+from bertopic_setup import setup_bertopic_model
 from outlier_reduction import apply_outlier_reduction
 from visualization import create_visualizations
 from results_saver import save_results, generate_summary_report
 
-# BERTopic and ML imports
+# BERTopic import
 from bertopic import BERTopic
-from bertopic.vectorizers import ClassTfidfTransformer
-from sentence_transformers import SentenceTransformer
-from umap import UMAP
-from hdbscan import HDBSCAN
-from sklearn.feature_extraction.text import CountVectorizer
-
-# Visualization imports
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# GPU and caching
-import torch
-import hashlib
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
-
-
-def parse_bib_file(file_path: str, config: Dict, logger) -> pd.DataFrame:
-    """
-    Parse BIB file and extract relevant text fields with caching.
-    
-    Args:
-        file_path: Path to the BIB file
-        config: Configuration dictionary
-        logger: Configured logger instance
-        
-    Returns:
-        DataFrame with parsed bibliography entries
-    """
-    # Check if parsed data is cached
-    cache_dir = get_cache_dir(config)
-    bib_hash = get_file_hash(file_path)
-    cache_name = f"parsed_bib_{bib_hash[:8]}"
-    
-    if cache_exists(cache_dir, cache_name):
-        logger.info("📂 Loading parsed BIB data from cache...")
-        return load_from_cache(cache_dir, cache_name)
-    
-    logger.info(f"📖 Parsing BIB file: {file_path}")
-    
-    try:
-        with open(file_path, 'r', encoding='utf-8') as bib_file:
-            parser = BibTexParser(common_strings=True)
-            bib_database = bibtexparser.load(bib_file, parser=parser)
-            
-        logger.info(f"Found {len(bib_database.entries)} entries in BIB file")
-        
-        # Convert to DataFrame for easier processing
-        df = pd.DataFrame(bib_database.entries)
-        
-        # Clean and standardize text fields
-        text_fields = config['data']['text_fields']
-        
-        for field in text_fields:
-            if field in df.columns:
-                df[field] = df[field].fillna('').astype(str)
-                # Remove excessive whitespace and clean text
-                df[field] = df[field].str.replace(r'\s+', ' ', regex=True).str.strip()
-            else:
-                df[field] = ''
-                
-        # Create combined text field for topic modeling
-        df['combined_text'] = (
-            df['title'].fillna('') + ' ' + 
-            df['abstract'].fillna('') + ' ' + 
-            df['keywords'].fillna('')
-        ).str.strip()
-        
-        # Filter out entries with insufficient text content
-        min_text_length = 50
-        original_count = len(df)
-        df = df[df['combined_text'].str.len() >= min_text_length]
-        
-        logger.info(f"Filtered to {len(df)} entries with sufficient text content "
-                   f"(removed {original_count - len(df)} entries)")
-        
-        # Cache the result
-        save_to_cache(df, cache_dir, cache_name)
-        
-        return df
-        
-    except Exception as e:
-        logger.error(f"Error parsing BIB file: {e}")
-        raise
-
-
-def prepare_embeddings(texts: List[str], config: Dict, logger) -> np.ndarray:
-    """
-    Generate embeddings using sentence transformers with caching.
-    
-    Args:
-        texts: List of text documents
-        config: Configuration dictionary
-        logger: Configured logger instance
-        
-    Returns:
-        Numpy array of embeddings
-    """
-    model_config = config['embedding_model']
-    
-    # Create embedding cache key based on model and documents
-    docs_hash = hashlib.md5(str(texts).encode()).hexdigest()
-    model_name = model_config['name']
-    cache_dir = get_cache_dir(config)
-    embedding_cache_name = f"embeddings_{model_name.replace('/', '_')}_{docs_hash[:8]}"
-    
-    if cache_exists(cache_dir, embedding_cache_name):
-        logger.info("🚀 Loading embeddings from cache (super fast!)...")
-        embeddings = load_from_cache(cache_dir, embedding_cache_name)
-        logger.info(f"✅ Loaded embeddings shape: {embeddings.shape}")
-        return embeddings
-    
-    logger.info(f"🤖 Computing embeddings using {model_config['name']}")
-    
-    # Detect device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cuda":
-        logger.info(f"Using GPU: {torch.cuda.get_device_name(0)}")
-        # Increase batch size for GPU
-        batch_size = min(model_config['batch_size'] * 2, 128)
-    else:
-        logger.info("Using CPU")
-        batch_size = model_config['batch_size']
-    
-    # Initialize sentence transformer model with device
-    sentence_model = SentenceTransformer(model_config['name'], device=device)
-    
-    # Generate embeddings with progress bar
-    logger.info("⏳ This may take several minutes for 3,364 documents...")
-    embeddings = sentence_model.encode(
-        texts,
-        batch_size=batch_size,
-        show_progress_bar=model_config['show_progress'],
-        convert_to_numpy=True
-    )
-    
-    # Cache the embeddings
-    save_to_cache(embeddings, cache_dir, embedding_cache_name)
-    
-    # Clear GPU memory if using CUDA
-    if device == "cuda":
-        torch.cuda.empty_cache()
-        logger.info("GPU memory cleared")
-    
-    logger.info(f"Generated embeddings shape: {embeddings.shape}")
-    return embeddings
-
-
-def setup_bertopic_model(config: Dict, logger) -> BERTopic:
-    """
-    Configure BERTopic model with optimized parameters for academic text.
-    Supports both seed words and guided topic modeling.
-    
-    Args:
-        config: Configuration dictionary
-        logger: Configured logger instance
-        
-    Returns:
-        Configured BERTopic model
-    """
-    logger.info("Setting up BERTopic model with custom parameters")
-    
-    # Configure UMAP for dimensionality reduction
-    umap_params = config['umap_params'].copy()
-    logger.info(f"UMAP parameters: n_neighbors={umap_params.get('n_neighbors')}, "
-               f"n_components={umap_params.get('n_components')}, "
-               f"min_dist={umap_params.get('min_dist')}")
-    umap_model = UMAP(**umap_params)
-    
-    # Configure HDBSCAN for clustering
-    hdbscan_params = config['hdbscan_params'].copy()
-    logger.info(f"HDBSCAN parameters: min_cluster_size={hdbscan_params.get('min_cluster_size')}, "
-               f"max_cluster_size={hdbscan_params.get('max_cluster_size')}, "
-               f"cluster_selection_epsilon={hdbscan_params.get('cluster_selection_epsilon')}")
-    hdbscan_model = HDBSCAN(**hdbscan_params)
-    
-    # Configure vectorizer for better academic term extraction
-    vectorizer_model = CountVectorizer(
-        ngram_range=(1, 2),
-        stop_words="english",
-        min_df=2,
-        max_df=0.95,
-        max_features=5000
-    )
-    
-    # Configure ClassTfidfTransformer with seed words if enabled
-    ctfidf_model = None
-    if config.get('domain_guidance', {}).get('seed_words', {}).get('enabled', False):
-        seed_config = config['domain_guidance']['seed_words']
-        seed_words = seed_config.get('words', [])
-        multiplier = seed_config.get('multiplier', 2.0)
-        
-        if seed_words:
-            logger.info(f"🌱 Enabling seed words enhancement with {len(seed_words)} domain terms")
-            logger.info(f"   Multiplier: {multiplier}x for words: {seed_words[:5]}{'...' if len(seed_words) > 5 else ''}")
-            
-            ctfidf_model = ClassTfidfTransformer(
-                seed_words=seed_words,
-                seed_multiplier=multiplier
-            )
-        else:
-            logger.warning("Seed words enabled but no words provided - skipping enhancement")
-    else:
-        logger.info("Seed words enhancement disabled")
-    
-    # Check if guided topic modeling is enabled
-    guided_topics_config = config.get('domain_guidance', {}).get('guided_topics', {})
-    if guided_topics_config.get('enabled', False):
-        logger.info("🎯 Guided topic modeling enabled")
-        return setup_guided_bertopic_model(
-            config, umap_model, hdbscan_model, vectorizer_model, 
-            ctfidf_model, logger
-        )
-    
-    # Initialize standard BERTopic model
-    # NOTE: Following BERTopic best practices - let HDBSCAN find natural clusters
-    topic_model = BERTopic(
-        umap_model=umap_model,
-        hdbscan_model=hdbscan_model,
-        vectorizer_model=vectorizer_model,
-        ctfidf_model=ctfidf_model,  # Add ClassTfidfTransformer
-        calculate_probabilities=config['data']['calculate_probabilities'],
-        # REMOVED nr_topics - will use post-training reduction if needed
-        min_topic_size=config['data']['min_topic_size'],
-        verbose=True
-    )
-    
-    return topic_model
-
-
-def setup_guided_bertopic_model(config: Dict, umap_model, hdbscan_model, 
-                               vectorizer_model, ctfidf_model, logger) -> BERTopic:
-    """
-    Configure BERTopic model with guided topic modeling.
-    
-    Args:
-        config: Configuration dictionary
-        umap_model: Configured UMAP model
-        hdbscan_model: Configured HDBSCAN model
-        vectorizer_model: Configured vectorizer
-        ctfidf_model: Configured ClassTfidfTransformer (can be None)
-        logger: Configured logger instance
-        
-    Returns:
-        BERTopic model configured for guided topic modeling
-    """
-    guided_config = config['domain_guidance']['guided_topics']
-    guided_params = guided_config.get('parameters', {})
-    
-    # Extract guided topics and their seed words
-    topics_dict = guided_config.get('topics', {})
-    
-    # Prepare seed topic lists for BERTopic
-    seed_topic_list = []
-    
-    for topic_name, topic_config in topics_dict.items():
-        seeds = topic_config.get('seeds', [])
-        
-        if seeds:
-            seed_topic_list.append(seeds)
-            logger.info(f"   📋 {topic_name}: {seeds}")
-    
-    if not seed_topic_list:
-        logger.warning("Guided topics enabled but no topic seeds provided - falling back to standard model")
-        return BERTopic(
-            umap_model=umap_model,
-            hdbscan_model=hdbscan_model,
-            vectorizer_model=vectorizer_model,
-            ctfidf_model=ctfidf_model,
-            calculate_probabilities=config['data']['calculate_probabilities'],
-            nr_topics=config['data']['nr_topics'],
-            min_topic_size=config['data']['min_topic_size'],
-            verbose=True
-        )
-    
-    logger.info(f"   🎯 Configured {len(seed_topic_list)} guided topics")
-    
-    # Initialize BERTopic model with guided topic modeling
-    # NOTE: Following BERTopic best practices - let HDBSCAN find natural clusters first
-    topic_model = BERTopic(
-        umap_model=umap_model,
-        hdbscan_model=hdbscan_model,
-        vectorizer_model=vectorizer_model,
-        ctfidf_model=ctfidf_model,
-        seed_topic_list=seed_topic_list,  # Enable guided topic modeling
-        calculate_probabilities=config['data']['calculate_probabilities'],
-        # REMOVED nr_topics - will use post-training reduction if needed
-        min_topic_size=config['data']['min_topic_size'],
-        verbose=True
-    )
-    
-    return topic_model
 
 
 def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
@@ -394,62 +93,6 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
     return topics, probs
 
 
-def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataFrame, 
-                                        logger) -> pd.DataFrame:
-    """
-    Generate topic_info DataFrame from updated topic assignments.
-    This ensures consistency when model representations aren't updated.
-    
-    Args:
-        topics: Updated topic assignments
-        df_results: DataFrame with document information and topics
-        logger: Configured logger instance
-        
-    Returns:
-        DataFrame with topic information consistent with updated assignments
-    """
-    logger.info("🔧 Generating topic_info from updated assignments...")
-    
-    from collections import Counter
-    
-    # Count documents per topic
-    topic_counts = Counter(topics)
-    
-    # Create topic_info DataFrame
-    topic_info_data = []
-    
-    for topic_id, count in topic_counts.items():
-        # Get representative documents for this topic
-        topic_docs = df_results[df_results['topic'] == topic_id]
-        
-        # Create a simple representation (we can't generate full c-TF-IDF without the model)
-        if topic_id == -1:
-            name = "Outliers"
-            representation = ["outlier", "documents", "unassigned", "noise", "scattered"]
-        else:
-            # Use first few words from titles/abstracts as simple representation
-            sample_texts = topic_docs['combined_text'].head(10).tolist()
-            # This is a simplified representation - ideally would use c-TF-IDF
-            name = f"Topic_{topic_id}"
-            representation = [f"topic_{topic_id}", "documents", "cluster", "group", "category"]
-        
-        topic_info_data.append({
-            'Topic': topic_id,
-            'Count': count,
-            'Name': name,
-            'Representation': representation,
-            'Representative_Docs': topic_docs['title'].head(3).tolist() if not topic_docs.empty else []
-        })
-    
-    # Sort by count (descending) then by topic ID
-    topic_info_data.sort(key=lambda x: (-x['Count'], x['Topic']))
-    
-    topic_info_df = pd.DataFrame(topic_info_data)
-    
-    logger.info(f"   ✅ Generated topic_info for {len(topic_info_df)} topics")
-    return topic_info_df
-
-
 def main():
     """Main execution function."""
     # Setup
@@ -473,14 +116,14 @@ def main():
     
     try:
         # Parse BIB file (cached)
-        df = parse_bib_file("merged.bib", config, logger)
+        df = parse_bib_file("merged.bib", config)
         docs = df['combined_text'].tolist()
         
         # Generate embeddings (cached)
-        embeddings = prepare_embeddings(docs, config, logger)
+        embeddings = prepare_embeddings(docs, config)
         
         # Setup and train BERTopic model
-        topic_model = setup_bertopic_model(config, logger)
+        topic_model = setup_bertopic_model(config)
         topics, probs = analyze_topics(topic_model, docs, embeddings, config, logger)
         
         # Create visualizations

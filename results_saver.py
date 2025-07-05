@@ -17,6 +17,58 @@ from loguru import logger
 from utils import get_results_dir, get_models_dir, get_output_config
 
 
+def generate_topic_info_from_assignments(topics: List[int], df_results: pd.DataFrame) -> pd.DataFrame:
+    """
+    Generate topic_info DataFrame from updated topic assignments.
+    This ensures consistency when model representations aren't updated.
+    
+    Args:
+        topics: Updated topic assignments
+        df_results: DataFrame with document information and topics
+        
+    Returns:
+        DataFrame with topic information consistent with updated assignments
+    """
+    logger.info("🔧 Generating topic_info from updated assignments...")
+    
+    # Count documents per topic
+    topic_counts = Counter(topics)
+    
+    # Create topic_info DataFrame
+    topic_info_data = []
+    
+    for topic_id, count in topic_counts.items():
+        # Get representative documents for this topic
+        topic_docs = df_results[df_results['topic'] == topic_id]
+        
+        # Create a simple representation (we can't generate full c-TF-IDF without the model)
+        if topic_id == -1:
+            name = "Outliers"
+            representation = ["outlier", "documents", "unassigned", "noise", "scattered"]
+        else:
+            # Use first few words from titles/abstracts as simple representation
+            sample_texts = topic_docs['combined_text'].head(10).tolist()
+            # This is a simplified representation - ideally would use c-TF-IDF
+            name = f"Topic_{topic_id}"
+            representation = [f"topic_{topic_id}", "documents", "cluster", "group", "category"]
+        
+        topic_info_data.append({
+            'Topic': topic_id,
+            'Count': count,
+            'Name': name,
+            'Representation': representation,
+            'Representative_Docs': topic_docs['title'].head(3).tolist() if not topic_docs.empty else []
+        })
+    
+    # Sort by count (descending) then by topic ID
+    topic_info_data.sort(key=lambda x: (-x['Count'], x['Topic']))
+    
+    topic_info_df = pd.DataFrame(topic_info_data)
+    
+    logger.info(f"   ✅ Generated topic_info for {len(topic_info_df)} topics")
+    return topic_info_df
+
+
 def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
                 probs: np.ndarray, embeddings: np.ndarray,
                 config: Dict, output_dir: str) -> None:
