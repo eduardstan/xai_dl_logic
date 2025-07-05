@@ -13,7 +13,7 @@ from pathlib import Path
 from loguru import logger
 
 # Import shared utilities
-from utils import load_config
+from utils import setup_logging, load_config
 
 # Import extracted functionality modules
 from topic_processor import process_topics
@@ -47,6 +47,10 @@ def main():
         - Results include selected representatives and comprehensive reports
         - Follows same pattern as bib_analyzer.py for consistency
     """
+    # Setup
+    setup_logging()
+    logger.info("Starting advanced systematic literature review analysis")
+    
     try:
         # Load configuration
         config = load_config()
