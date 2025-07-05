@@ -30,11 +30,11 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
-                  config: Dict, logger) -> Tuple[List[int], np.ndarray]:
+def train_topic_model(topic_model: BERTopic, docs: List[str], embeddings: np.ndarray,
+                     config: Dict, logger) -> Tuple[List[int], np.ndarray]:
     """
-    Perform topic modeling analysis with pre-computed embeddings.
-    Includes post-training topic reduction following BERTopic best practices.
+    Train the BERTopic model with pre-computed embeddings.
+    Includes post-training outlier reduction following BERTopic best practices.
     
     Args:
         topic_model: Configured BERTopic model
@@ -46,7 +46,7 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
     Returns:
         Tuple of (topics, probabilities)
     """
-    logger.info("Starting topic modeling analysis with pre-computed embeddings")
+    logger.info("🚀 Training BERTopic model with pre-computed embeddings")
     
     # Use pre-computed embeddings to avoid recomputation
     topics, probs = topic_model.fit_transform(docs, embeddings)
@@ -124,7 +124,7 @@ def main():
         
         # Setup and train BERTopic model
         topic_model = setup_bertopic_model(config)
-        topics, probs = analyze_topics(topic_model, docs, embeddings, config, logger)
+        topics, probs = train_topic_model(topic_model, docs, embeddings, config, logger)
         
         # Create visualizations
         create_visualizations(topic_model, docs, embeddings, topics, config, output_dir)
