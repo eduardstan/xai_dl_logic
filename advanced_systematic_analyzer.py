@@ -29,6 +29,9 @@ from cluster_analysis import calculate_cluster_size_category, determine_papers_t
 # Import extracted paper selection functionality
 from paper_selection import select_diverse_representatives, assign_non_selected_papers
 
+# Import extracted paper metrics functionality
+from paper_metrics import compute_paper_metrics
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -125,36 +128,7 @@ class AdvancedSystematicAnalyzer:
     
 
     
-    def compute_paper_metrics(self, paper_embeddings: np.ndarray, cluster_embeddings: np.ndarray) -> Dict[str, float]:
-        """Compute comprehensive metrics for a paper within its cluster."""
-        # Similarity to cluster centroid
-        centroid = np.mean(cluster_embeddings, axis=0)
-        similarity_to_centroid = cosine_similarity([paper_embeddings], [centroid])[0][0]
-        
-        # Average similarity to all cluster papers
-        similarities = cosine_similarity([paper_embeddings], cluster_embeddings)[0]
-        avg_similarity_to_cluster = np.mean(similarities)
-        
-        # Diversity score (1 - max similarity to other papers)
-        other_similarities = similarities[similarities != 1.0]  # Exclude self-similarity
-        max_similarity = np.max(other_similarities) if len(other_similarities) > 0 else 0
-        # Clamp max_similarity to [0, 1] to avoid floating point precision issues
-        max_similarity = np.clip(max_similarity, 0.0, 1.0)
-        diversity_score = 1.0 - max_similarity
-        
-        # Representativeness score (combination of centrality and diversity)
-        diversity_weight = self.review_config['diversity_weight']
-        representativeness_score = (
-            (1 - diversity_weight) * similarity_to_centroid + 
-            diversity_weight * diversity_score
-        )
-        
-        return {
-            'similarity_to_centroid': similarity_to_centroid,
-            'similarity_to_cluster_papers': avg_similarity_to_cluster,
-            'diversity_score': diversity_score,
-            'representativeness_score': representativeness_score
-        }
+
     
 
     
@@ -212,9 +186,10 @@ class AdvancedSystematicAnalyzer:
             # Process all papers in the topic
             for local_idx, global_idx in enumerate(topic_indices):
                 # Compute metrics
-                metrics = self.compute_paper_metrics(
+                metrics = compute_paper_metrics(
                     embeddings[global_idx], 
-                    topic_embeddings
+                    topic_embeddings,
+                    self.config
                 )
                 
                 # Get document data
