@@ -18,68 +18,7 @@ from datetime import datetime
 # Import data loading functionality
 from data_loader_viz import load_analysis_data
 from metrics_visualizations import create_metrics_overview
-
-def create_selection_analysis(df_summary, output_dir):
-    """Create visualizations analyzing the selection strategy."""
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    fig.suptitle('Selection Strategy Analysis', fontsize=16, fontweight='bold')
-    
-    # 1. Papers selected vs cluster size
-    ax1 = axes[0, 0]
-    scatter = ax1.scatter(df_summary['cluster_size'], df_summary['papers_selected'], 
-                         c=df_summary['avg_centrality'], cmap='coolwarm', 
-                         s=100, alpha=0.7, edgecolors='black', linewidth=0.5)
-    ax1.set_xlabel('Cluster Size')
-    ax1.set_ylabel('Papers Selected')
-    ax1.set_title('Selection Pattern by Cluster Size\n(color = avg centrality)')
-    ax1.grid(alpha=0.3)
-    plt.colorbar(scatter, ax=ax1, label='Avg Centrality')
-    
-    # Add ideal line
-    x_ideal = np.linspace(0, df_summary['cluster_size'].max(), 100)
-    y_ideal = np.minimum(3 + (x_ideal / 50), 8)  # Based on config thresholds
-    ax1.plot(x_ideal, y_ideal, 'r--', alpha=0.7, label='Ideal Selection')
-    ax1.legend()
-    
-    # 2. Selection ratio vs cluster size
-    ax2 = axes[0, 1]
-    colors = ['red' if x < 0.05 else 'orange' if x < 0.1 else 'green' for x in df_summary['selection_ratio']]
-    bars = ax2.bar(range(len(df_summary)), df_summary['selection_ratio'], color=colors, alpha=0.7)
-    ax2.set_xlabel('Topic ID')
-    ax2.set_ylabel('Selection Ratio')
-    ax2.set_title('Selection Ratio by Topic\n(red<5%, orange<10%, green≥10%)')
-    ax2.set_xticks(range(0, len(df_summary), 5))
-    ax2.set_xticklabels(df_summary['topic_id'].iloc[::5])
-    ax2.grid(axis='y', alpha=0.3)
-    
-    # 3. Average centrality vs diversity trade-off
-    ax3 = axes[1, 0]
-    # Fix negative diversity scores (clamp to 0)
-    df_summary_fixed = df_summary.copy()
-    df_summary_fixed['avg_diversity'] = np.maximum(df_summary_fixed['avg_diversity'], 0)
-    
-    scatter = ax3.scatter(df_summary_fixed['avg_centrality'], df_summary_fixed['avg_diversity'], 
-                         s=df_summary_fixed['cluster_size']*2, 
-                         c=df_summary_fixed['papers_selected'], cmap='viridis', 
-                         alpha=0.7, edgecolors='black', linewidth=0.5)
-    ax3.set_xlabel('Average Centrality')
-    ax3.set_ylabel('Average Diversity')
-    ax3.set_title('Centrality vs Diversity Trade-off\n(size = cluster size, color = papers selected)')
-    ax3.grid(alpha=0.3)
-    plt.colorbar(scatter, ax=ax3, label='Papers Selected')
-    
-    # 4. Topic size categories
-    ax4 = axes[1, 1]
-    size_counts = df_summary['size_category'].value_counts()
-    colors_cat = ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db']
-    wedges, texts, autotexts = ax4.pie(size_counts.values, labels=size_counts.index, 
-                                      autopct='%1.1f%%', colors=colors_cat[:len(size_counts)], 
-                                      startangle=90)
-    ax4.set_title('Distribution of Topic Size Categories')
-    
-    plt.tight_layout()
-    plt.savefig(output_dir / 'selection_analysis.png', dpi=300, bbox_inches='tight', facecolor='white')
-    print("📈 Selection analysis visualization saved!")
+from selection_visualizations import create_selection_analysis
 
 def create_interactive_topic_explorer(df_all, df_selected, df_summary, output_dir):
     """Create interactive visualizations using Plotly."""
