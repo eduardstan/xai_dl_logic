@@ -15,41 +15,8 @@ from plotly.subplots import make_subplots
 import plotly.offline as pyo
 from datetime import datetime
 
-def load_analysis_data():
-    """Load the comprehensive analysis data."""
-    # Find the most recent analysis files
-    results_dir = Path("results")
-    
-    # Load comprehensive analysis
-    comprehensive_files = list(results_dir.glob("comprehensive_analysis_*.csv"))
-    if not comprehensive_files:
-        raise FileNotFoundError("No comprehensive analysis files found")
-    
-    latest_comprehensive = max(comprehensive_files, key=lambda x: x.stat().st_mtime)
-    df_all = pd.read_csv(latest_comprehensive)
-    
-    # Load selection summary
-    summary_files = list(results_dir.glob("selection_summary_*.csv"))
-    if not summary_files:
-        raise FileNotFoundError("No selection summary files found")
-    
-    latest_summary = max(summary_files, key=lambda x: x.stat().st_mtime)
-    df_summary = pd.read_csv(latest_summary)
-    
-    # Load selected representatives
-    selected_files = list(results_dir.glob("selected_representatives_*.csv"))
-    if not selected_files:
-        raise FileNotFoundError("No selected representatives files found")
-    
-    latest_selected = max(selected_files, key=lambda x: x.stat().st_mtime)
-    df_selected = pd.read_csv(latest_selected)
-    
-    print(f"📂 Loaded data:")
-    print(f"  - All papers: {len(df_all):,}")
-    print(f"  - Selected representatives: {len(df_selected):,}")
-    print(f"  - Topics: {len(df_summary)}")
-    
-    return df_all, df_summary, df_selected
+# Import data loading functionality
+from data_loader_viz import load_analysis_data
 
 def create_metrics_overview(df_all, df_selected, output_dir):
     """Create overview visualizations of the new metrics."""
