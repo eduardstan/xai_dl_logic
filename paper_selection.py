@@ -8,10 +8,18 @@ from academic clusters using optimization techniques that balance centrality and
 
 import numpy as np
 from typing import Dict, List
-from sklearn.metrics.pairwise import cosine_similarity
 from loguru import logger
 
-from utils import get_systematic_review_config, get_random_seed
+from utils import (
+    get_systematic_review_config, 
+    get_random_seed,
+    compute_cosine_similarity_to_centroid,
+    compute_pairwise_similarities,
+    compute_diversity_score,
+    compute_representativeness_score,
+    compute_pairwise_similarity_matrix,
+    compute_cluster_centroid
+)
 
 
 def select_diverse_representatives(cluster_embeddings: np.ndarray, n_select: int, config: Dict) -> List[int]:
@@ -69,22 +77,16 @@ def select_diverse_representatives(cluster_embeddings: np.ndarray, n_select: int
     try:
         review_config = get_systematic_review_config(config)
         
-        # Pre-filter papers with sufficient diversity potential
+        # Pre-filter papers with sufficient diversity potential using utility function
         min_diversity = review_config.get('min_diversity_threshold', 0.0)
         diversity_scores = []
         valid_indices = []
         
         for i in range(len(cluster_embeddings)):
-            similarities = cosine_similarity([cluster_embeddings[i]], cluster_embeddings)[0]
-            other_similarities = similarities[similarities != 1.0]  # Exclude self-similarity
-            if len(other_similarities) > 0:
-                max_similarity = np.clip(np.max(other_similarities), 0.0, 1.0)
-                diversity = 1.0 - max_similarity
-                diversity_scores.append(diversity)
-                if diversity >= min_diversity:
-                    valid_indices.append(i)
-            else:
-                diversity_scores.append(0.0)
+            diversity = compute_diversity_score(cluster_embeddings[i], cluster_embeddings)
+            diversity_scores.append(diversity)
+            if diversity >= min_diversity:
+                valid_indices.append(i)
         
         # If not enough valid papers, fall back to all papers
         if len(valid_indices) < n_select:
@@ -136,8 +138,8 @@ def _iterative_selection(cluster_embeddings: np.ndarray, n_select: int,
     """
     try:
         review_config = get_systematic_review_config(config)
-        centroid = np.mean(cluster_embeddings, axis=0)
-        similarities_to_centroid = cosine_similarity(cluster_embeddings, [centroid]).flatten()
+        centroid = compute_cluster_centroid(cluster_embeddings)
+        similarities_to_centroid = compute_pairwise_similarities(centroid, cluster_embeddings)
         diversity_weight = review_config['diversity_weight']
         iterations = review_config.get('selection_iterations', 5)
         
@@ -169,20 +171,19 @@ def _iterative_selection(cluster_embeddings: np.ndarray, n_select: int,
                 for candidate in remaining:
                     # Calculate diversity to already selected papers
                     if len(selected) > 0:
-                        similarities_to_selected = cosine_similarity(
-                            [cluster_embeddings[candidate]], 
+                        similarities_to_selected = compute_pairwise_similarities(
+                            cluster_embeddings[candidate], 
                             cluster_embeddings[selected]
-                        ).flatten()
+                        )
                         avg_similarity_to_selected = np.mean(similarities_to_selected)
                         diversity_to_selected = 1.0 - avg_similarity_to_selected
                     else:
                         diversity_to_selected = 1.0
                     
-                    # Combined score
+                    # Combined score using utility function
                     centrality_score = similarities_to_centroid[candidate]
-                    combined_score = (
-                        (1 - diversity_weight) * centrality_score + 
-                        diversity_weight * diversity_to_selected
+                    combined_score = compute_representativeness_score(
+                        centrality_score, diversity_to_selected, diversity_weight
                     )
                     
                     if combined_score > best_candidate_score:
@@ -207,7 +208,6 @@ def _iterative_selection(cluster_embeddings: np.ndarray, n_select: int,
     
     except Exception as e:
         logger.error(f"Error in iterative selection: {e}")
-        # Fallback to greedy selection
         return _greedy_selection(cluster_embeddings, n_select, valid_indices, diversity_scores, config)
 
 
@@ -245,8 +245,8 @@ def _greedy_selection(cluster_embeddings: np.ndarray, n_select: int,
     """
     try:
         review_config = get_systematic_review_config(config)
-        centroid = np.mean(cluster_embeddings, axis=0)
-        similarities_to_centroid = cosine_similarity(cluster_embeddings, [centroid]).flatten()
+        centroid = compute_cluster_centroid(cluster_embeddings)
+        similarities_to_centroid = compute_pairwise_similarities(centroid, cluster_embeddings)
         diversity_weight = review_config['diversity_weight']
         
         # Start with the best combination of centrality and individual diversity
@@ -254,7 +254,7 @@ def _greedy_selection(cluster_embeddings: np.ndarray, n_select: int,
         for idx in valid_indices:
             centrality = similarities_to_centroid[idx]
             diversity = diversity_scores[idx]
-            score = (1 - diversity_weight) * centrality + diversity_weight * diversity
+            score = compute_representativeness_score(centrality, diversity, diversity_weight)
             initial_scores.append((idx, score))
         
         initial_scores.sort(key=lambda x: x[1], reverse=True)
@@ -271,22 +271,24 @@ def _greedy_selection(cluster_embeddings: np.ndarray, n_select: int,
             best_idx = -1
             
             for idx in remaining_indices:
-                # Calculate average similarity to already selected papers (better than min)
-                similarities_to_selected = cosine_similarity(
-                    [cluster_embeddings[idx]], 
+                # Calculate average similarity to already selected papers
+                similarities_to_selected = compute_pairwise_similarities(
+                    cluster_embeddings[idx], 
                     cluster_embeddings[selected_indices]
-                ).flatten()
+                )
                 
                 avg_similarity = np.mean(similarities_to_selected)
                 diversity_to_selected = 1.0 - avg_similarity
                 
-                # Enhanced scoring
+                # Enhanced scoring using utility functions
                 centrality_score = similarities_to_centroid[idx]
                 individual_diversity = diversity_scores[idx]
                 
                 # Combine individual diversity and diversity to selected
                 combined_diversity = 0.6 * diversity_to_selected + 0.4 * individual_diversity
-                combined_score = (1 - diversity_weight) * centrality_score + diversity_weight * combined_diversity
+                combined_score = compute_representativeness_score(
+                    centrality_score, combined_diversity, diversity_weight
+                )
                 
                 if combined_score > best_score:
                     best_score = combined_score
@@ -337,9 +339,10 @@ def _evaluate_selection_quality(cluster_embeddings: np.ndarray, selected_indices
         # Average centrality
         centrality_score = np.mean([similarities_to_centroid[i] for i in selected_indices])
         
-        # Pairwise diversity
+        # Pairwise diversity using utility function
         if len(selected_indices) > 1:
-            pairwise_similarities = cosine_similarity(cluster_embeddings[selected_indices])
+            selected_embeddings = cluster_embeddings[selected_indices]
+            pairwise_similarities = compute_pairwise_similarity_matrix(selected_embeddings)
             # Get upper triangle (excluding diagonal)
             upper_triangle = pairwise_similarities[np.triu_indices_from(pairwise_similarities, k=1)]
             avg_pairwise_similarity = np.mean(upper_triangle)
@@ -347,8 +350,8 @@ def _evaluate_selection_quality(cluster_embeddings: np.ndarray, selected_indices
         else:
             diversity_score = 1.0
         
-        # Combined quality score
-        quality = (1 - diversity_weight) * centrality_score + diversity_weight * diversity_score
+        # Combined quality score using utility function
+        quality = compute_representativeness_score(centrality_score, diversity_score, diversity_weight)
         return quality
     
     except Exception as e:
@@ -413,7 +416,7 @@ def assign_non_selected_papers(cluster_embeddings: np.ndarray,
                 continue
             
             # Find most similar representative
-            similarities = cosine_similarity([embedding], selected_embeddings)[0]
+            similarities = compute_pairwise_similarities(embedding, selected_embeddings)
             best_rep_idx = np.argmax(similarities)
             best_similarity = similarities[best_rep_idx]
             
