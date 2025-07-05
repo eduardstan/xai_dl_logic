@@ -19,7 +19,9 @@ from sklearn.cluster import KMeans
 from typing import Dict, List, Tuple, Set
 import logging
 from datetime import datetime
-import re
+
+# Import extracted research alignment functionality
+from research_alignment import analyze_research_alignment
 
 # Configure logging
 logging.basicConfig(
@@ -412,50 +414,7 @@ class AdvancedSystematicAnalyzer:
         
         return assignments
     
-    def analyze_research_alignment(self, text: str) -> Dict[str, float]:
-        """Analyze alignment with XAI, symbolic, and sub-symbolic research using wildcard matching."""
-        import fnmatch
-        import re
-        
-        keywords = self.review_config['research_keywords']
-        
-        # Convert to lowercase for case-insensitive matching
-        text_lower = text.lower()
-        
-        alignment_scores = {}
-        for category, terms in keywords.items():
-            matches = 0
-            for term in terms:
-                term_lower = term.lower()
-                
-                # Handle wildcard patterns
-                if '*' in term_lower:
-                    # Convert wildcard pattern to regex for proper word matching
-                    # For patterns like "neural*", match "neural", "neurons", "neurally" 
-                    # but NOT "networks" or other unrelated words
-                    if term_lower.endswith('*'):
-                        # Pattern like "neural*" -> match words starting with "neural"
-                        base_term = term_lower[:-1]  # Remove the '*'
-                        pattern = r'\b' + re.escape(base_term) + r'\w*\b'
-                    elif term_lower.startswith('*'):
-                        # Pattern like "*symbolic" -> match words ending with "symbolic"
-                        base_term = term_lower[1:]  # Remove the '*'
-                        pattern = r'\b\w*' + re.escape(base_term) + r'\b'
-                    else:
-                        # Pattern like "neuro*symbolic" -> match words with that pattern
-                        parts = term_lower.split('*')
-                        pattern = r'\b' + re.escape(parts[0]) + r'\w*' + re.escape(parts[1]) + r'\b'
-                    
-                    if re.search(pattern, text_lower):
-                        matches += 1
-                else:
-                    # Exact word matching for terms without wildcards
-                    if re.search(r'\b' + re.escape(term_lower) + r'\b', text_lower):
-                        matches += 1
-            
-            alignment_scores[f'{category}_alignment'] = matches / len(terms)
-        
-        return alignment_scores
+
     
     def process_topics(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Process all topics and select diverse representative papers."""
@@ -535,7 +494,7 @@ class AdvancedSystematicAnalyzer:
                         'keywords': ', '.join(doc.get('keywords', []))
                     }
                 
-                alignment = self.analyze_research_alignment(full_text)
+                alignment = analyze_research_alignment(full_text, self.config)
                 
                 # Selection status
                 is_selected = local_idx in selected_local_indices
