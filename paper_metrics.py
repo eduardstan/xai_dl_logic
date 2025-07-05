@@ -8,10 +8,17 @@ within their topic clusters, including similarity, diversity, and representative
 
 import numpy as np
 from typing import Dict
-from sklearn.metrics.pairwise import cosine_similarity
 from loguru import logger
 
-from utils import get_systematic_review_config
+from utils import (
+    get_systematic_review_config,
+    compute_cosine_similarity_to_centroid,
+    compute_pairwise_similarities,
+    compute_diversity_score,
+    compute_representativeness_score,
+    compute_pairwise_similarity_matrix,
+    compute_cluster_centroid
+)
 
 
 def compute_paper_metrics(paper_embeddings: np.ndarray, cluster_embeddings: np.ndarray, config: Dict) -> Dict[str, float]:
@@ -86,29 +93,19 @@ def compute_paper_metrics(paper_embeddings: np.ndarray, cluster_embeddings: np.n
         review_config = get_systematic_review_config(config)
         
         # 1. Similarity to cluster centroid (representativeness/centrality)
-        centroid = np.mean(cluster_embeddings, axis=0)
-        similarity_to_centroid = cosine_similarity([paper_embeddings], [centroid])[0][0]
+        similarity_to_centroid = compute_cosine_similarity_to_centroid(paper_embeddings, cluster_embeddings)
         
         # 2. Average similarity to all cluster papers (cluster coherence)
-        similarities = cosine_similarity([paper_embeddings], cluster_embeddings)[0]
+        similarities = compute_pairwise_similarities(paper_embeddings, cluster_embeddings)
         avg_similarity_to_cluster = np.mean(similarities)
         
         # 3. Diversity score (uniqueness within cluster)
-        other_similarities = similarities[similarities != 1.0]  # Exclude self-similarity
-        if len(other_similarities) > 0:
-            max_similarity = np.max(other_similarities)
-            # Clamp max_similarity to [0, 1] to avoid floating point precision issues
-            max_similarity = np.clip(max_similarity, 0.0, 1.0)
-            diversity_score = 1.0 - max_similarity
-        else:
-            # Single paper in cluster - maximally diverse
-            diversity_score = 1.0
+        diversity_score = compute_diversity_score(paper_embeddings, cluster_embeddings)
         
         # 4. Representativeness score (combination of centrality and diversity)
         diversity_weight = review_config.get('diversity_weight', 0.6)
-        representativeness_score = (
-            (1 - diversity_weight) * similarity_to_centroid + 
-            diversity_weight * diversity_score
+        representativeness_score = compute_representativeness_score(
+            similarity_to_centroid, diversity_score, diversity_weight
         )
         
         return {
@@ -168,8 +165,8 @@ def compute_cluster_metrics(cluster_embeddings: np.ndarray, config: Dict) -> Dic
                 'cluster_representativeness': 1.0
             }
         
-        # Compute pairwise similarities
-        pairwise_similarities = cosine_similarity(cluster_embeddings)
+        # Compute pairwise similarities using utility function
+        pairwise_similarities = compute_pairwise_similarity_matrix(cluster_embeddings)
         
         # Cluster coherence (average pairwise similarity, excluding diagonal)
         upper_triangle = pairwise_similarities[np.triu_indices_from(pairwise_similarities, k=1)]
@@ -178,21 +175,16 @@ def compute_cluster_metrics(cluster_embeddings: np.ndarray, config: Dict) -> Dic
         # Cluster diversity (average of individual diversity scores)
         diversity_scores = []
         for i in range(n_papers):
-            other_similarities = pairwise_similarities[i][pairwise_similarities[i] != 1.0]
-            if len(other_similarities) > 0:
-                max_sim = np.clip(np.max(other_similarities), 0.0, 1.0)
-                diversity = 1.0 - max_sim
-                diversity_scores.append(diversity)
-            else:
-                diversity_scores.append(1.0)
+            diversity = compute_diversity_score(cluster_embeddings[i], cluster_embeddings)
+            diversity_scores.append(diversity)
         
         cluster_diversity = np.mean(diversity_scores)
         
         # Cluster compactness (std dev of distances to centroid)
-        centroid = np.mean(cluster_embeddings, axis=0)
+        centroid = compute_cluster_centroid(cluster_embeddings)
         distances_to_centroid = []
         for embedding in cluster_embeddings:
-            similarity = cosine_similarity([embedding], [centroid])[0][0]
+            similarity = compute_cosine_similarity_to_centroid(embedding, cluster_embeddings)
             distance = 1.0 - similarity  # Convert similarity to distance
             distances_to_centroid.append(distance)
         

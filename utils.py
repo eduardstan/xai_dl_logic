@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 from loguru import logger
+import numpy as np
 
 
 def setup_logging(
@@ -619,3 +620,250 @@ def validate_file_exists(file_path: Union[str, Path], description: str = "File")
     
     logger.info(f"✅ {description} validated: {file_path}")
     return path
+
+
+# === Common Metrics Calculation Functions ===
+
+def compute_cluster_centroid(cluster_embeddings: np.ndarray) -> np.ndarray:
+    """
+    Compute the centroid (mean) of a cluster of document embeddings.
+    
+    Args:
+        cluster_embeddings: Embedding matrix of shape (n_papers, embedding_dim)
+        
+    Returns:
+        np.ndarray: Centroid vector of shape (embedding_dim,)
+        
+    Raises:
+        ValueError: If cluster_embeddings is empty or has invalid shape
+        
+    Example:
+        >>> embeddings = np.random.random((20, 384))  # 20 papers, 384-dim embeddings
+        >>> centroid = compute_cluster_centroid(embeddings)
+        >>> centroid.shape
+        (384,)
+    
+    Note:
+        - Centroid represents the "average" document in the cluster
+        - Used for measuring representativeness and centrality
+        - Essential for similarity calculations in paper selection
+    """
+    if len(cluster_embeddings) == 0:
+        raise ValueError("cluster_embeddings cannot be empty")
+    
+    if len(cluster_embeddings.shape) != 2:
+        raise ValueError(f"cluster_embeddings must be 2D matrix, got shape {cluster_embeddings.shape}")
+    
+    return np.mean(cluster_embeddings, axis=0)
+
+
+def compute_cosine_similarity_to_centroid(paper_embedding: np.ndarray, 
+                                        cluster_embeddings: np.ndarray) -> float:
+    """
+    Compute cosine similarity between a paper and its cluster centroid.
+    
+    Args:
+        paper_embedding: Single paper embedding vector of shape (embedding_dim,)
+        cluster_embeddings: Embedding matrix for cluster of shape (n_papers, embedding_dim)
+        
+    Returns:
+        float: Cosine similarity score between 0.0 and 1.0
+        
+    Raises:
+        ValueError: If embeddings have incompatible shapes
+        
+    Example:
+        >>> paper_emb = np.random.random(384)
+        >>> cluster_embs = np.random.random((20, 384))
+        >>> similarity = compute_cosine_similarity_to_centroid(paper_emb, cluster_embs)
+        >>> 0.0 <= similarity <= 1.0
+        True
+    
+    Note:
+        - High similarity indicates the paper is representative of the cluster
+        - Used for measuring centrality in paper selection algorithms
+        - Automatically handles centroid calculation
+    """
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    if len(paper_embedding.shape) != 1:
+        raise ValueError(f"paper_embedding must be 1D vector, got shape {paper_embedding.shape}")
+    
+    if len(cluster_embeddings.shape) != 2:
+        raise ValueError(f"cluster_embeddings must be 2D matrix, got shape {cluster_embeddings.shape}")
+    
+    if paper_embedding.shape[0] != cluster_embeddings.shape[1]:
+        raise ValueError(f"Embedding dimension mismatch: paper={paper_embedding.shape[0]}, cluster={cluster_embeddings.shape[1]}")
+    
+    centroid = compute_cluster_centroid(cluster_embeddings)
+    return cosine_similarity([paper_embedding], [centroid])[0][0]
+
+
+def compute_pairwise_similarities(paper_embedding: np.ndarray, 
+                                cluster_embeddings: np.ndarray) -> np.ndarray:
+    """
+    Compute cosine similarities between a paper and all papers in its cluster.
+    
+    Args:
+        paper_embedding: Single paper embedding vector of shape (embedding_dim,)
+        cluster_embeddings: Embedding matrix for cluster of shape (n_papers, embedding_dim)
+        
+    Returns:
+        np.ndarray: Array of similarity scores of shape (n_papers,)
+        
+    Raises:
+        ValueError: If embeddings have incompatible shapes
+        
+    Example:
+        >>> paper_emb = np.random.random(384)
+        >>> cluster_embs = np.random.random((20, 384))
+        >>> similarities = compute_pairwise_similarities(paper_emb, cluster_embs)
+        >>> similarities.shape
+        (20,)
+    
+    Note:
+        - Used for computing diversity scores and cluster coherence
+        - Returns similarities to all papers in cluster, including self-similarity
+        - Self-similarity will be 1.0 if paper is in the cluster
+    """
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    if len(paper_embedding.shape) != 1:
+        raise ValueError(f"paper_embedding must be 1D vector, got shape {paper_embedding.shape}")
+    
+    if len(cluster_embeddings.shape) != 2:
+        raise ValueError(f"cluster_embeddings must be 2D matrix, got shape {cluster_embeddings.shape}")
+    
+    if paper_embedding.shape[0] != cluster_embeddings.shape[1]:
+        raise ValueError(f"Embedding dimension mismatch: paper={paper_embedding.shape[0]}, cluster={cluster_embeddings.shape[1]}")
+    
+    return cosine_similarity([paper_embedding], cluster_embeddings)[0]
+
+
+def compute_diversity_score(paper_embedding: np.ndarray, 
+                          cluster_embeddings: np.ndarray) -> float:
+    """
+    Compute diversity score for a paper within its cluster.
+    
+    The diversity score measures how unique a paper is within its cluster by
+    computing 1 - max_similarity to other papers in the cluster.
+    
+    Args:
+        paper_embedding: Single paper embedding vector of shape (embedding_dim,)
+        cluster_embeddings: Embedding matrix for cluster of shape (n_papers, embedding_dim)
+        
+    Returns:
+        float: Diversity score between 0.0 and 1.0, where higher values indicate more uniqueness
+        
+    Raises:
+        ValueError: If embeddings have incompatible shapes
+        
+    Example:
+        >>> paper_emb = np.random.random(384)
+        >>> cluster_embs = np.random.random((20, 384))
+        >>> diversity = compute_diversity_score(paper_emb, cluster_embs)
+        >>> 0.0 <= diversity <= 1.0
+        True
+    
+    Note:
+        - Excludes self-similarity to avoid division by zero
+        - Higher scores indicate more unique content within the cluster
+        - Returns 1.0 for single-paper clusters (maximally diverse)
+        - Used in paper selection algorithms to balance centrality and diversity
+    """
+    similarities = compute_pairwise_similarities(paper_embedding, cluster_embeddings)
+    
+    # Exclude self-similarity (similarity = 1.0)
+    other_similarities = similarities[similarities != 1.0]
+    
+    if len(other_similarities) > 0:
+        max_similarity = np.max(other_similarities)
+        # Clamp max_similarity to [0, 1] to avoid floating point precision issues
+        max_similarity = np.clip(max_similarity, 0.0, 1.0)
+        return 1.0 - max_similarity
+    else:
+        # Single paper in cluster - maximally diverse
+        return 1.0
+
+
+def compute_representativeness_score(centrality_score: float, 
+                                   diversity_score: float, 
+                                   diversity_weight: float = 0.6) -> float:
+    """
+    Compute representativeness score combining centrality and diversity.
+    
+    The representativeness score balances being representative (central) with
+    being unique (diverse) using a weighted combination.
+    
+    Args:
+        centrality_score: Similarity to cluster centroid (0.0 to 1.0)
+        diversity_score: Uniqueness within cluster (0.0 to 1.0)
+        diversity_weight: Weight for diversity vs centrality trade-off (0.0 to 1.0)
+        
+    Returns:
+        float: Representativeness score between 0.0 and 1.0
+        
+    Raises:
+        ValueError: If any score is outside reasonable range
+        
+    Example:
+        >>> centrality = 0.8  # High centrality
+        >>> diversity = 0.6   # Medium diversity
+        >>> score = compute_representativeness_score(centrality, diversity, 0.6)
+        >>> 0.0 <= score <= 1.0
+        True
+    
+    Formula:
+        representativeness = (1 - diversity_weight) * centrality + diversity_weight * diversity
+    
+    Note:
+        - diversity_weight = 0.0: Pure centrality (most representative)
+        - diversity_weight = 1.0: Pure diversity (most unique)
+        - diversity_weight = 0.6: Balanced approach (default)
+        - Used in paper selection algorithms for optimal representative selection
+        - Automatically clamps input values to [0, 1] to handle floating point precision
+    """
+    # Clamp scores to [0, 1] to handle floating point precision issues
+    centrality_score = np.clip(centrality_score, 0.0, 1.0)
+    diversity_score = np.clip(diversity_score, 0.0, 1.0)
+    diversity_weight = np.clip(diversity_weight, 0.0, 1.0)
+    
+    return (1 - diversity_weight) * centrality_score + diversity_weight * diversity_score
+
+
+def compute_pairwise_similarity_matrix(embeddings: np.ndarray) -> np.ndarray:
+    """
+    Compute pairwise cosine similarity matrix for a set of embeddings.
+    
+    Args:
+        embeddings: Embedding matrix of shape (n_papers, embedding_dim)
+        
+    Returns:
+        np.ndarray: Similarity matrix of shape (n_papers, n_papers)
+        
+    Raises:
+        ValueError: If embeddings has invalid shape
+        
+    Example:
+        >>> embeddings = np.random.random((20, 384))
+        >>> similarity_matrix = compute_pairwise_similarity_matrix(embeddings)
+        >>> similarity_matrix.shape
+        (20, 20)
+    
+    Note:
+        - Diagonal elements are 1.0 (self-similarity)
+        - Matrix is symmetric
+        - Used for cluster analysis and quality evaluation
+    """
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    if len(embeddings.shape) != 2:
+        raise ValueError(f"embeddings must be 2D matrix, got shape {embeddings.shape}")
+    
+    if len(embeddings) == 0:
+        raise ValueError("embeddings cannot be empty")
+    
+    return cosine_similarity(embeddings)
+
+
+# === End Common Metrics Calculation Functions ===
