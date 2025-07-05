@@ -24,6 +24,9 @@ from utils import (
     get_models_dir, get_plots_dir, ensure_output_dirs
 )
 
+# Import loguru logger
+from loguru import logger
+
 # Import specialized modules
 from outlier_reduction import apply_outlier_reduction
 
@@ -68,7 +71,7 @@ def parse_bib_file(file_path: str, config: Dict, logger) -> pd.DataFrame:
     
     if cache_exists(cache_dir, cache_name):
         logger.info("📂 Loading parsed BIB data from cache...")
-        return load_from_cache(cache_dir, cache_name, logger)
+        return load_from_cache(cache_dir, cache_name)
     
     logger.info(f"📖 Parsing BIB file: {file_path}")
     
@@ -109,7 +112,7 @@ def parse_bib_file(file_path: str, config: Dict, logger) -> pd.DataFrame:
                    f"(removed {original_count - len(df)} entries)")
         
         # Cache the result
-        save_to_cache(df, cache_dir, cache_name, logger)
+        save_to_cache(df, cache_dir, cache_name)
         
         return df
         
@@ -140,7 +143,7 @@ def prepare_embeddings(texts: List[str], config: Dict, logger) -> np.ndarray:
     
     if cache_exists(cache_dir, embedding_cache_name):
         logger.info("🚀 Loading embeddings from cache (super fast!)...")
-        embeddings = load_from_cache(cache_dir, embedding_cache_name, logger)
+        embeddings = load_from_cache(cache_dir, embedding_cache_name)
         logger.info(f"✅ Loaded embeddings shape: {embeddings.shape}")
         return embeddings
     
@@ -169,7 +172,7 @@ def prepare_embeddings(texts: List[str], config: Dict, logger) -> np.ndarray:
     )
     
     # Cache the embeddings
-    save_to_cache(embeddings, cache_dir, embedding_cache_name, logger)
+    save_to_cache(embeddings, cache_dir, embedding_cache_name)
     
     # Clear GPU memory if using CUDA
     if device == "cuda":
@@ -408,7 +411,7 @@ def create_visualizations(topic_model: BERTopic, docs: List[str],
     logger.info("🎨 Creating visualizations with updated topic assignments and preserved representations")
     
     viz_config = config['visualization']
-    plots_dir = get_plots_dir(config, output_dir)
+    plots_dir = Path(output_dir) / get_plots_dir(config)
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Model now has updated topic assignments with preserved original representations
@@ -502,8 +505,8 @@ def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
     logger.info("💾 Saving analysis results with consistent topic assignments")
     
     # Create output directories
-    results_dir = get_results_dir(config, output_dir)
-    models_dir = get_models_dir(config, output_dir)
+    results_dir = Path(output_dir) / get_results_dir(config)
+    models_dir = Path(output_dir) / get_models_dir(config)
     
     for directory in [results_dir, models_dir]:
         directory.mkdir(parents=True, exist_ok=True)
@@ -638,7 +641,7 @@ def generate_summary_report(topic_model: BERTopic, df: pd.DataFrame,
     """
     logger.info("📋 Generating summary report with updated topic assignments")
     
-    results_dir = get_results_dir(config, output_dir)
+    results_dir = Path(output_dir) / get_results_dir(config)
     
     # Basic statistics using updated topics
     n_documents = len(topics)
@@ -731,7 +734,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 def main():
     """Main execution function."""
     # Setup
-    logger = setup_logging()
+    setup_logging()
     logger.info("Starting BERTopic analysis for academic bibliography")
     
     # Load configuration
