@@ -45,7 +45,6 @@ def apply_outlier_reduction(topic_model: BERTopic, docs: List[str], topics: List
     current_topics = topics.copy()
     
     strategies = outlier_config.get('strategies', [])
-    verbose = outlier_config.get('verbose', True)
     save_intermediate = outlier_config.get('save_intermediate_results', False)
     
     for i, strategy_config in enumerate(strategies):

@@ -85,11 +85,13 @@ def setup_bertopic_model(config: Dict) -> BERTopic:
     
     # Configure UMAP for dimensionality reduction
     umap_params = get_umap_config(config).copy()
-    logger.info(f"UMAP: neighbors={umap_params.get('n_neighbors')}, components={umap_params.get('n_components')}")
+    umap_params['random_state'] = get_random_seed(config)  # Ensure consistent random seed
+    logger.info(f"UMAP: neighbors={umap_params.get('n_neighbors')}, components={umap_params.get('n_components')}, random_state={umap_params.get('random_state')}")
     umap_model = UMAP(**umap_params)
     
     # Configure HDBSCAN for clustering
     hdbscan_params = get_hdbscan_config(config).copy()
+    # Note: HDBSCAN doesn't support random_state parameter
     logger.info(f"HDBSCAN: min_cluster_size={hdbscan_params.get('min_cluster_size')}, max_cluster_size={hdbscan_params.get('max_cluster_size')}")
     hdbscan_model = HDBSCAN(**hdbscan_params)
     
