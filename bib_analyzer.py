@@ -29,6 +29,7 @@ from loguru import logger
 
 # Import specialized modules
 from outlier_reduction import apply_outlier_reduction
+from visualization import create_visualizations
 
 # BERTopic and ML imports
 from bertopic import BERTopic
@@ -392,99 +393,6 @@ def analyze_topics(topic_model: BERTopic, docs: List[str], embeddings: np.ndarra
     return topics, probs
 
 
-def create_visualizations(topic_model: BERTopic, docs: List[str], 
-                         embeddings: np.ndarray, topics: List[int], config: Dict,
-                         output_dir: str, logger) -> None:
-    """
-    Generate comprehensive visualizations following BERTopic best practices.
-    Now supports updated topic assignments for consistent artifacts.
-    
-    Args:
-        topic_model: Trained BERTopic model
-        docs: List of documents
-        embeddings: Document embeddings
-        topics: Updated topic assignments (post-outlier reduction)
-        config: Configuration dictionary
-        output_dir: Output directory for plots
-        logger: Configured logger instance
-    """
-    logger.info("🎨 Creating visualizations with updated topic assignments and preserved representations")
-    
-    viz_config = config['visualization']
-    plots_dir = Path(output_dir) / get_plots_dir(config)
-    plots_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Model now has updated topic assignments with preserved original representations
-    # No need for additional updates - visualizations will show correct assignments with quality names
-    
-    # 1. Topic visualization (overview) - uses preserved topic names with updated assignments
-    logger.info("Creating topic overview visualization")
-    fig_topics = topic_model.visualize_topics()
-    fig_topics.write_html(str(plots_dir / "topics_overview.html"))
-    
-    # 2. Topic hierarchy - uses preserved topic names with updated assignments
-    logger.info("Creating hierarchical topic visualization")
-    fig_hierarchy = topic_model.visualize_hierarchy()
-    fig_hierarchy.write_html(str(plots_dir / "topics_hierarchy.html"))
-    
-    # 3. Topic heatmap - uses preserved topic names with updated assignments
-    logger.info("Creating topic similarity heatmap")
-    fig_heatmap = topic_model.visualize_heatmap()
-    fig_heatmap.write_html(str(plots_dir / "topics_heatmap.html"))
-    
-    # 4. Document visualization with DataMapPlot (interactive)
-    if viz_config['interactive_datamapplot']:
-        logger.info("Creating interactive document visualization with DataMapPlot")
-        
-        # Reduce embeddings for visualization if configured
-        if viz_config['reduce_embeddings_for_viz']:
-            reduced_embeddings = UMAP(
-                n_neighbors=10,
-                n_components=2,
-                min_dist=0.0,
-                metric='cosine',
-                random_state=config['random_seed']
-            ).fit_transform(embeddings)
-            
-            # Interactive DataMapPlot - uses preserved topic names with updated assignments
-            fig_datamap = topic_model.visualize_document_datamap(
-                docs,
-                reduced_embeddings=reduced_embeddings,
-                interactive=True
-            )
-            
-            # Regular document plot for comparison - uses preserved topic names with updated assignments
-            fig_docs = topic_model.visualize_documents(
-                docs,
-                reduced_embeddings=reduced_embeddings,
-                hide_document_hover=viz_config['hide_document_hover']
-            )
-            
-        else:
-            fig_datamap = topic_model.visualize_document_datamap(
-                docs,
-                embeddings=embeddings,
-                interactive=True
-            )
-            
-            fig_docs = topic_model.visualize_documents(
-                docs,
-                embeddings=embeddings,
-                hide_document_hover=viz_config['hide_document_hover']
-            )
-        
-        # Save interactive plots
-        fig_datamap.save(str(plots_dir / "documents_interactive_datamap.html"))
-        fig_docs.write_html(str(plots_dir / "documents_plotly.html"))
-    
-    # 5. Topic terms visualization - uses preserved topic names with updated assignments
-    logger.info("Creating topic terms barchart")
-    fig_barchart = topic_model.visualize_barchart(top_n_topics=12, n_words=8)
-    fig_barchart.write_html(str(plots_dir / "topics_barchart.html"))
-    
-    logger.info(f"✅ All visualizations saved to: {plots_dir}")
-
-
 def save_results(topic_model: BERTopic, df: pd.DataFrame, topics: List[int],
                 probs: np.ndarray, embeddings: np.ndarray,
                 config: Dict, output_dir: str, logger) -> None:
@@ -765,7 +673,7 @@ def main():
         topics, probs = analyze_topics(topic_model, docs, embeddings, config, logger)
         
         # Create visualizations
-        create_visualizations(topic_model, docs, embeddings, topics, config, output_dir, logger)
+        create_visualizations(topic_model, docs, embeddings, topics, config, output_dir)
         
         # Save results
         save_results(topic_model, df, topics, probs, embeddings, config, output_dir, logger)
