@@ -32,6 +32,9 @@ from paper_selection import select_diverse_representatives, assign_non_selected_
 # Import extracted paper metrics functionality
 from paper_metrics import compute_paper_metrics
 
+# Import extracted data loading functionality
+from data_loader import load_analysis_results
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -65,88 +68,11 @@ class AdvancedSystematicAnalyzer:
             logger.error(f"❌ Error loading config: {e}")
             raise
     
-    def load_analysis_results(self) -> Tuple[object, np.ndarray, List[Dict], List[int]]:
-        """Load cached BERTopic analysis results with updated topic assignments."""
-        try:
-            # Load BERTopic model from bertopic_analysis/models
-            models_dir = Path("bertopic_analysis/models")
-            model_files = list(models_dir.glob("bertopic_model_*"))
-            if not model_files:
-                raise FileNotFoundError("No BERTopic model files found in bertopic_analysis/models")
-            
-            # Use the most recent model file
-            model_path = max(model_files, key=lambda x: x.stat().st_mtime)
-            from bertopic import BERTopic
-            topic_model = BERTopic.load(str(model_path))
-            logger.info(f"📂 Loaded BERTopic model from {model_path}")
-            
-            # Load the MOST RECENT topic assignments from CSV results (post-outlier reduction)
-            results_dir = Path("bertopic_analysis/results")
-            csv_files = list(results_dir.glob("bibliography_with_topics_*.csv"))
-            if not csv_files:
-                raise FileNotFoundError("No results CSV files found in bertopic_analysis/results")
-            
-            # Use the most recent CSV file
-            csv_path = max(csv_files, key=lambda x: x.stat().st_mtime)
-            results_df = pd.read_csv(csv_path)
-            updated_topics = results_df['topic'].tolist()
-            logger.info(f"📂 Loaded UPDATED topic assignments from {csv_path}")
-            logger.info(f"   📊 Total papers: {len(updated_topics)}")
-            logger.info(f"   📊 Outliers: {sum(1 for t in updated_topics if t == -1)}")
-            logger.info(f"   📊 Assigned to topics: {sum(1 for t in updated_topics if t != -1)}")
-            
-            # Load embeddings from cache
-            embeddings_files = list(self.cache_dir.glob("embeddings_*.pkl"))
-            if not embeddings_files:
-                raise FileNotFoundError("No embedding cache files found")
-            
-            embeddings_path = embeddings_files[0]  # Use the first (should be only one)
-            with open(embeddings_path, 'rb') as f:
-                embeddings = pickle.load(f)
-            logger.info(f"📂 Loaded embeddings from {embeddings_path}")
-            
-            # Load parsed documents from cache
-            parsed_files = list(self.cache_dir.glob("parsed_bib_*.pkl"))
-            if not parsed_files:
-                raise FileNotFoundError("No parsed BIB cache files found")
-            
-            parsed_path = parsed_files[0]
-            with open(parsed_path, 'rb') as f:
-                documents = pickle.load(f)
-            logger.info(f"📂 Loaded documents from {parsed_path}")
-            
-            # Verify data consistency
-            if len(updated_topics) != len(embeddings) or len(updated_topics) != len(documents):
-                raise ValueError(f"Data length mismatch: topics={len(updated_topics)}, embeddings={len(embeddings)}, documents={len(documents)}")
-            
-            logger.info(f"✅ Analysis results loaded: {len(documents)} documents, {len(embeddings)} embeddings, {len(updated_topics)} topic assignments")
-            return topic_model, embeddings, documents, updated_topics
-            
-        except Exception as e:
-            logger.error(f"❌ Error loading analysis results: {e}")
-            raise
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
     def process_topics(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Process all topics and select diverse representative papers."""
         logger.info("🔍 Processing topics for diverse representative selection...")
         
-        topic_model, embeddings, documents, updated_topics = self.load_analysis_results()
+        topic_model, embeddings, documents, updated_topics = load_analysis_results(self.config)
         
         # Use the updated topic assignments (post-outlier reduction)
         topics = updated_topics
