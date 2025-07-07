@@ -13,7 +13,7 @@ umap_params:
   n_components: 128
   min_dist: 0.0
   metric: "cosine"
-  random_state: 42
+  # random_state will be set from main random_seed for consistency
 
 hdbscan_params:
   min_cluster_size: 16
@@ -23,6 +23,7 @@ hdbscan_params:
   metric: "euclidean"
   cluster_selection_method: "eom"
   prediction_data: true  # Enable prediction data for probabilities
+  # Note: HDBSCAN doesn't support random_state parameter (inherently deterministic)
 
 # Visualization Configuration
 visualization:
@@ -69,7 +70,6 @@ outlier_reduction:
   update_representations: false
   
   # Logging and analysis
-  verbose: true
   save_intermediate_results: true
 
 # Output Configuration
@@ -207,5 +207,4 @@ domain_guidance:
 
 # Reproducibility
 random_seed: 42
-model_version: "0.17.0"
 timestamp_format: "%Y%m%d_%H%M%S" 
