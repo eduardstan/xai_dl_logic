@@ -38,12 +38,15 @@ class PipelineConfig(BaseModel):
 
 class UMAPParams(BaseModel):
     n_neighbors: int = 15
-    n_components: int = 5
+    n_components: int = 128
     min_dist: float = 0.0
     metric: str = "cosine"
 
 class HDBSCANParams(BaseModel):
-    min_cluster_size: int = 15
+    min_cluster_size: int = 16
+    max_cluster_size: int = 128
+    min_samples: int = 5
+    cluster_selection_epsilon: float = 0.1
     metric: str = "euclidean"
     cluster_selection_method: str = "eom"
     prediction_data: bool = True
@@ -51,10 +54,13 @@ class HDBSCANParams(BaseModel):
 class VectorizerParams(BaseModel):
     stop_words: str = "english"
     ngram_range: Tuple[int, int] = (1, 2)
+    min_df: int = 2
+    max_df: float = 0.95
+    max_features: int = 5000
 
 class BERTopicParams(BaseModel):
     min_topic_size: int = 15
-    calculate_probabilities: bool = True
+    calculate_probabilities: bool = False
     verbose: bool = True
 
 class EmbeddingModelConfig(BaseModel):
@@ -76,6 +82,7 @@ class OutlierReductionConfig(BaseModel):
     enabled: bool = True
     strategies: List[OutlierReductionStrategy]
     update_representations: bool = False
+    save_intermediate_results: bool = True
 
 class SeedWordsConfig(BaseModel):
     enabled: bool = False

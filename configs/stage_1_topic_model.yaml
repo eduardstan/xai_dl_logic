@@ -46,6 +46,8 @@ vectorizer_params:
 # Core parameters for the BERTopic model itself.
 bertopic_params:
   min_topic_size: 10
+  calculate_probabilities: false
+  verbose: true
 
 # General data processing settings for topic modeling.
 data_processing:
@@ -74,6 +76,7 @@ outlier_reduction:
   # If true, topic representations are recalculated after outlier reduction.
   # Set to false to preserve the original, more coherent topic names.
   update_representations: false
+  save_intermediate_results: true
 
 # Domain knowledge injection for guiding the topic modeling process.
 domain_guidance:
