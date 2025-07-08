@@ -118,17 +118,21 @@ class RatioParams(BaseModel):
     target_selection_ratio: float = 0.15
     min_papers_per_cluster: int = 2
 
+
 class ThresholdParams(BaseModel):
     base_papers_per_cluster: int = 4
-    max_papers_per_cluster: int = 200
     cluster_thresholds: Dict[str, int]
 
 
 class SelectionStrategyConfig(BaseModel):
     method: Literal["diverse_representative", "centroid_based"] = "diverse_representative"
     count_method: Literal["ratio_based", "threshold_based"] = "ratio_based"
+    max_papers_per_cluster: int = Field(
+        200, gt=0, description="Absolute maximum papers to select, regardless of strategy."
+    )
     ratio_params: RatioParams = Field(default_factory=RatioParams)
     threshold_params: ThresholdParams
+
 
 class MetricsConfig(BaseModel):
     diversity_weight: float = Field(

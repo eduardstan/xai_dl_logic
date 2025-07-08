@@ -45,14 +45,11 @@ def determine_papers_to_select(cluster_size: int, config: AppConfig) -> int:
 
 def _determine_papers_ratio_based(cluster_size: int, config: AppConfig) -> int:
     """Calculates selection count based on a fixed ratio."""
-    params = config.stage_2.selection_strategy.ratio_params
+    strategy_config = config.stage_2.selection_strategy
+    params = strategy_config.ratio_params
     target_ratio = params.target_selection_ratio
     min_papers = params.min_papers_per_cluster
-
-    # The legacy code had a max_papers constraint here, which is not in the
-    # current Pydantic model for ratio_params. The threshold_params has one,
-    # so we will borrow it for consistency.
-    max_papers = config.stage_2.selection_strategy.threshold_params.max_papers_per_cluster
+    max_papers = strategy_config.max_papers_per_cluster
 
     calculated_papers = max(1, int(cluster_size * target_ratio))
     constrained_papers = min(max(calculated_papers, min_papers), max_papers)
@@ -80,9 +77,10 @@ def _calculate_cluster_size_category(cluster_size: int, config: AppConfig) -> st
 
 def _determine_papers_threshold_based(cluster_size: int, config: AppConfig) -> int:
     """Calculates selection count based on discrete size thresholds."""
-    params = config.stage_2.selection_strategy.threshold_params
+    strategy_config = config.stage_2.selection_strategy
+    params = strategy_config.threshold_params
     base = params.base_papers_per_cluster
-    max_papers = params.max_papers_per_cluster
+    max_papers = strategy_config.max_papers_per_cluster
     category = _calculate_cluster_size_category(cluster_size, config)
 
     size_mapping = {

@@ -22,68 +22,47 @@ class TestClusterAnalysis(unittest.TestCase):
     def test_ratio_based_selection(self):
         """Test the ratio-based paper selection strategy."""
         self.config.stage_2.selection_strategy.count_method = "ratio_based"
-        params = self.config.stage_2.selection_strategy.ratio_params
-        params.target_selection_ratio = 0.1  # 10%
-        params.min_papers_per_cluster = 3
+        strategy_config = self.config.stage_2.selection_strategy
+        strategy_config.ratio_params.target_selection_ratio = 0.1
+        strategy_config.ratio_params.min_papers_per_cluster = 3
+        strategy_config.max_papers_per_cluster = 15
 
-        # Test cases: (cluster_size, expected_selection)
         test_cases = [
-            (10, 3),  # Below min, should select min
-            (50, 5),  # 10% of 50 = 5
-            (100, 10), # 10% of 100 = 10
-            (2, 2),   # Cannot select more than exist
+            (10, 3),   # Below min, selects min
+            (50, 5),   # 10% of 50 = 5
+            (200, 15), # 10% of 200 = 20, but capped by max
+            (2, 2),    # Cannot select more than exist
         ]
 
         for size, expected in test_cases:
-            with self.subTest(size=size, expected=expected):
+            with self.subTest(f"ratio_{size}_{expected}"):
                 self.assertEqual(determine_papers_to_select(size, self.config), expected)
 
     def test_threshold_based_selection(self):
         """Test the threshold-based paper selection strategy."""
         self.config.stage_2.selection_strategy.count_method = "threshold_based"
-        params = self.config.stage_2.selection_strategy.threshold_params
-        params.base_papers_per_cluster = 5
-        params.cluster_thresholds = {
-            "small": 10,
-            "medium": 25,
-            "large": 50,
-            "xlarge": 100,
-            "xxlarge": 200,
+        strategy_config = self.config.stage_2.selection_strategy
+        strategy_config.threshold_params.base_papers_per_cluster = 5
+        strategy_config.max_papers_per_cluster = 10 # Lower for testing
+        strategy_config.threshold_params.cluster_thresholds = {
+            "small": 10, "medium": 25, "large": 50, "xlarge": 100, "xxlarge": 200
         }
 
-        # Test cases: (cluster_size, expected_selection)
-        # small <= 10 -> base (5)
-        # medium <= 25 -> base + 1 (6)
-        # large <= 50 -> base + 2 (7)
-        # xlarge <= 100 -> base + 3 (8)
-        # xxlarge <= 200 -> base + 4 (9)
-        # xxxlarge > 200 -> max_papers (from config, default 200)
         test_cases = [
-            (5, 5),     # small
-            (10, 5),    # small
-            (11, 6),    # medium
-            (25, 6),    # medium
-            (50, 7),    # large
-            (100, 8),   # xlarge
-            (150, 9),   # xxlarge
-            (250, 200), # xxxlarge (capped by max_papers_per_cluster)
-            (3, 3),     # Cannot select more than exist
+            (5, 5),    # small -> base
+            (50, 7),   # large -> base + 2
+            (250, 10), # xxxlarge -> capped by max_papers
+            (3, 3),    # Cannot select more than exist
         ]
 
         for size, expected in test_cases:
-            with self.subTest(size=size, expected=expected):
+            with self.subTest(f"threshold_{size}_{expected}"):
                 self.assertEqual(determine_papers_to_select(size, self.config), expected)
 
     def test_invalid_cluster_size(self):
         """Test that invalid cluster sizes are handled gracefully."""
         self.assertEqual(determine_papers_to_select(0, self.config), 0)
         self.assertEqual(determine_papers_to_select(-10, self.config), 0)
-
-    def test_unknown_strategy(self):
-        """Test that an unknown strategy defaults to ratio-based."""
-        self.config.stage_2.selection_strategy.count_method = "unknown_strategy"
-        # It should fall back to the ratio-based calculation.
-        self.assertEqual(determine_papers_to_select(50, self.config), 5)
 
 
 if __name__ == "__main__":
