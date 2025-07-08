@@ -7,7 +7,7 @@ name = "research_analysis"
 version = "0.1.0"
 description = "A unified framework for systematic literature review analysis."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",

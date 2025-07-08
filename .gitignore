@@ -84,4 +84,5 @@ results/*.png
 results/*.html
 bertopic_analysis/plots/*.html
 bertopic_analysis/results/
-bertopic_analysis/models/ 
+bertopic_analysis/models/ \n# Global cache for expensive operations
+cache/
