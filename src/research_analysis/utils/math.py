@@ -39,7 +39,8 @@ def compute_cosine_similarity_to_centroid(
     similarity = cosine_similarity(
         paper_embedding.reshape(1, -1), centroid.reshape(1, -1)
     )
-    return float(similarity[0, 0])
+    # Clip result to handle theoretical edge cases where similarity is outside [0, 1]
+    return float(np.clip(similarity[0, 0], 0, 1))
 
 
 def compute_pairwise_similarities(
@@ -59,7 +60,8 @@ def compute_pairwise_similarities(
     similarities = cosine_similarity(
         paper_embedding.reshape(1, -1), cluster_embeddings
     )
-    return similarities.flatten()
+    # Clip result to handle theoretical edge cases where similarity is outside [0, 1]
+    return np.clip(similarities.flatten(), 0, 1)
 
 
 def compute_diversity_score(
@@ -69,9 +71,8 @@ def compute_diversity_score(
     Computes the diversity score for a paper within its cluster.
 
     The score is defined as 1 minus the highest similarity to any other paper
-    in the cluster, ignoring self-similarity. This implementation is based
-    on the robust legacy version, including clipping to handle floating-point
-    inaccuracies.
+    in the cluster, ignoring self-similarity. Includes clipping to handle
+    potential floating-point inaccuracies.
 
     Args:
         paper_embedding: The 1D embedding of the paper.
@@ -100,7 +101,15 @@ def compute_diversity_score(
 
 
 def compute_pairwise_similarity_matrix(embeddings: np.ndarray) -> np.ndarray:
-    """Computes the pairwise cosine similarity matrix for a set of embeddings."""
+    """
+    Computes the pairwise cosine similarity matrix for a set of embeddings.
+
+    Args:
+        embeddings: A 2D NumPy array where each row is an embedding.
+
+    Returns:
+        A 2D NumPy array representing the pairwise cosine similarity matrix.
+    """
     if embeddings.ndim != 2:
         raise ValueError("Input embeddings must be a 2D array.")
     return cosine_similarity(embeddings)
