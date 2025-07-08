@@ -52,4 +52,18 @@ def setup_logging(
             retention=retention,
             compression="zip",
         )
-        logger.info(f"📄 Logging to file: {log_path}") 
+        logger.info(f"📄 Logging to file: {log_path}")
+
+
+def get_logger():
+    """
+    Returns the configured logger instance.
+
+    This function provides an abstraction layer over the logging library,
+    allowing other modules to get a logger without being directly coupled
+    to loguru.
+
+    Returns:
+        The globally configured logger instance.
+    """
+    return logger 
