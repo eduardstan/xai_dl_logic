@@ -32,17 +32,41 @@ class TestSelection(unittest.TestCase):
             ]
         )
 
-    def test_select_diverse_representatives_standard(self):
-        """Test standard selection of 3 diverse papers."""
+    def test_greedy_selection_standard(self):
+        """Test standard greedy selection of 3 diverse papers."""
+        self.config.stage_2.metrics.use_iterative_selection = False
         n_select = 3
         selected_indices = select_diverse_representatives(
             self.cluster_embeddings, n_select, self.config
         )
         self.assertEqual(len(selected_indices), n_select)
         self.assertIsInstance(selected_indices, list)
-        # With the mock data, the most diverse papers should be the extremes.
-        # The greedy algorithm should find indices 0, 3, and 5.
+        # The greedy algorithm should find the most distinct papers.
         self.assertCountEqual(selected_indices, [0, 3, 5])
+
+    def test_iterative_selection_standard(self):
+        """Test standard iterative selection of 3 diverse papers."""
+        self.config.stage_2.metrics.use_iterative_selection = True
+        n_select = 3
+        selected_indices = select_diverse_representatives(
+            self.cluster_embeddings, n_select, self.config
+        )
+        self.assertEqual(len(selected_indices), n_select)
+        self.assertIsInstance(selected_indices, list)
+        # The iterative algorithm should also find the most distinct papers.
+        self.assertCountEqual(selected_indices, [0, 3, 5])
+
+    def test_diversity_threshold_filtering(self):
+        """Test that the diversity pre-filtering works correctly."""
+        self.config.stage_2.metrics.min_diversity_threshold = 0.8
+        n_select = 3
+        selected_indices = select_diverse_representatives(
+            self.cluster_embeddings, n_select, self.config
+        )
+        # Only papers 0, 3, 5 should pass this high threshold.
+        self.assertCountEqual(selected_indices, [0, 3, 5])
+        # Reset threshold for other tests
+        self.config.stage_2.metrics.min_diversity_threshold = 0.0
 
     def test_select_more_papers_than_available(self):
         """Test selecting more papers than exist in the cluster."""
@@ -50,7 +74,6 @@ class TestSelection(unittest.TestCase):
         selected_indices = select_diverse_representatives(
             self.cluster_embeddings, n_select, self.config
         )
-        # Should return all available paper indices
         self.assertEqual(len(selected_indices), len(self.cluster_embeddings))
         self.assertCountEqual(selected_indices, list(range(len(self.cluster_embeddings))))
 

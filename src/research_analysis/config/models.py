@@ -137,6 +137,12 @@ class MetricsConfig(BaseModel):
         le=1.0,
         description="Weight for diversity in the representativeness score (0.0=centrality, 1.0=diversity).",
     )
+    min_diversity_threshold: float = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum diversity score for a paper to be considered a candidate for selection.",
+    )
     similarity_threshold: float = 0.8
     use_iterative_selection: bool = True
     selection_iterations: int = 20
