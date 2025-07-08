@@ -33,6 +33,9 @@ research_analysis/
 │   └── stage_2_selection.yaml     # Paper selection & metrics params
 ├── data/
 │   └── merged.bib                 # Source bibliography data
+├── cache/
+│   ├── parsed_bib.pkl             # Cached parsed bibliography
+│   └── embeddings.pkl             # Cached document embeddings
 ├── pyproject.toml                 # Project definition and dependencies
 ├── README.md                      # Updated documentation
 ├── src/
@@ -70,10 +73,7 @@ research_analysis/
 │           ├── __init__.py
 │           ├── files.py           # File I/O, caching, path helpers
 │           └── logging.py         # Logging setup
-├── cache/                         # Persistent, shared cache for the project
-│   ├── embeddings_... .pkl
-│   └── parsed_bib_... .pkl
-└── outputs/                       # Unified output directory for run-specific artifacts
+└── outputs/                       # Unified output directory
     └── 20250708_103000/           # Example timestamped run directory
         ├── logs/
         │   └── app.log
@@ -92,14 +92,13 @@ research_analysis/
 
 ### 2.3. Key Architectural Decisions
 
-1.  **Unified Output Directory (`outputs/`):** All pipeline runs will generate a single, timestamped directory inside `outputs/`. This directory will contain subdirectories for each stage's artifacts, solving the `bertopic_analysis/` vs `results/` problem and making each run self-contained.
-2.  **Persistent Root-Level Cache (`cache/`):** A single `cache/` directory will exist at the project root. It will store persistent artifacts like embeddings and parsed dataframes, shared across all pipeline runs to maximize speed. This is a critical change from the original plan.
-3.  **Staged Configuration (`configs/`):** The `config.yaml` will be split into files that correspond to pipeline stages. Pydantic models in `src/research_analysis/config/` will load and validate them into a single, strongly-typed object.
-4.  **Pipeline-Oriented Code (`src/research_analysis/`):**
+1.  **Unified Output Directory (`outputs/`):** All pipeline runs will generate a single, timestamped directory inside `outputs/`. This directory will contain subdirectories for each stage's artifacts, solving the `bertopic_analysis/` vs `results/` problem and making each run self-contained. The `cache/` directory, however, will live at the project root to persist across runs.
+2.  **Staged Configuration (`configs/`):** The `config.yaml` will be split into files that correspond to pipeline stages. Pydantic models in `src/research_analysis/config/` will load and validate them into a single, strongly-typed object.
+3.  **Pipeline-Oriented Code (`src/research_analysis/`):**
     -   `main.py` will define the CLI using `Typer`.
     -   `pipeline/orchestrator.py` will contain the main function that calls each stage in sequence, passing data between them in memory.
     -   `stages/` will contain three submodules, one for each stage of the pipeline. The `__init__.py` in each stage submodule will act as a simple orchestrator, calling the more specialized modules within its own directory. This preserves modularity and avoids creating new monoliths.
-5.  **Dismantling `utils.py`:** The monolithic `utils.py` will be broken apart. Logging setup will go into `utils/logging.py`. Caching and file helpers will go into `utils/files.py`. Domain-specific computations (like metrics) will be moved directly into the stage that uses them.
+4.  **Dismantling `utils.py`:** The monolithic `utils.py` will be broken apart. Logging setup will go into `utils/logging.py`. Caching and file helpers will go into `utils/files.py`. Domain-specific computations (like metrics) will be moved directly into the stage that uses them.
 
 ---
 
@@ -190,7 +189,3 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 -   **Rationale:** Finalizes the refactoring, leaving a clean, professional, and well-documented project.
 -   **Testing:** A final check of the repository to ensure no legacy files remain.
 -   **Commit:** `chore: Remove legacy scripts and update documentation`
-
-## 4. Next Steps
-
-This plan is far more detailed and addresses the core architectural issues we've identified. Please review it. If you approve, I will delete the old plan and proceed with **Step 1.1: Create `pyproject.toml` and New Directory Structure**. 

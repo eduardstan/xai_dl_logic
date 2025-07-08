@@ -16,8 +16,7 @@ paths:
   outputs: "outputs"
   # Subdirectory within a run's output folder for log files.
   logs: "logs"
-  # Persistent cache directory at the project root for storing processed
-  # data like embeddings to speed up subsequent runs.
+  # Directory for cached data (e.g., parsed .bib, embeddings), at the project root.
   cache: "cache"
 
 # Logging Configuration
