@@ -7,7 +7,7 @@ configuration files, providing a strongly-typed and self-documenting
 way to manage pipeline parameters.
 """
 
-from typing import List, Dict, Any, Literal
+from typing import List, Dict, Any, Literal, Tuple
 from pydantic import BaseModel, Field
 
 
@@ -36,27 +36,33 @@ class PipelineConfig(BaseModel):
 
 # --- Models for stage_1_topic_model.yaml ---
 
+class UMAPParams(BaseModel):
+    n_neighbors: int = 15
+    n_components: int = 5
+    min_dist: float = 0.0
+    metric: str = "cosine"
+
+class HDBSCANParams(BaseModel):
+    min_cluster_size: int = 15
+    metric: str = "euclidean"
+    cluster_selection_method: str = "eom"
+    prediction_data: bool = True
+
+class VectorizerParams(BaseModel):
+    stop_words: str = "english"
+    ngram_range: Tuple[int, int] = (1, 2)
+
+class BERTopicParams(BaseModel):
+    min_topic_size: int = 15
+    calculate_probabilities: bool = True
+    verbose: bool = True
+
 class EmbeddingModelConfig(BaseModel):
     name: str = "all-MiniLM-L6-v2"
     batch_size: int = 64
     show_progress: bool = True
     device: str = "auto"
     cache_embeddings: bool = True
-
-class UmapParams(BaseModel):
-    n_neighbors: int = 15
-    n_components: int = 128
-    min_dist: float = 0.0
-    metric: str = "cosine"
-
-class HdbscanParams(BaseModel):
-    min_cluster_size: int = 16
-    max_cluster_size: int = 128
-    min_samples: int = 5
-    cluster_selection_epsilon: float = 0.1
-    metric: str = "euclidean"
-    cluster_selection_method: str = "eom"
-    prediction_data: bool = True
 
 class DataProcessingConfig(BaseModel):
     text_fields: List[str] = ["abstract", "title", "keywords"]
@@ -88,9 +94,12 @@ class DomainGuidanceConfig(BaseModel):
     guided_topics: GuidedTopicsConfig = Field(default_factory=GuidedTopicsConfig)
 
 class Stage1Config(BaseModel):
+    text_fields: List[str] = Field(default_factory=lambda: ["title", "abstract"])
     embedding_model: EmbeddingModelConfig = Field(default_factory=EmbeddingModelConfig)
-    umap_params: UmapParams = Field(default_factory=UmapParams)
-    hdbscan_params: HdbscanParams = Field(default_factory=HdbscanParams)
+    umap_params: UMAPParams = Field(default_factory=UMAPParams)
+    hdbscan_params: HDBSCANParams = Field(default_factory=HDBSCANParams)
+    vectorizer_params: VectorizerParams = Field(default_factory=VectorizerParams)
+    bertopic_params: BERTopicParams = Field(default_factory=BERTopicParams)
     data_processing: DataProcessingConfig = Field(default_factory=DataProcessingConfig)
     outlier_reduction: OutlierReductionConfig
     domain_guidance: DomainGuidanceConfig = Field(default_factory=DomainGuidanceConfig)

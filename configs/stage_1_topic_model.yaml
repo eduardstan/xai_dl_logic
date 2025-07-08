@@ -35,6 +35,18 @@ hdbscan_params:
   cluster_selection_method: "eom"
   prediction_data: true
 
+# Parameters for the CountVectorizer used by BERTopic.
+vectorizer_params:
+  stop_words: "english"
+  ngram_range: [1, 2]
+  min_df: 2
+  max_df: 0.95
+  max_features: 5000
+
+# Core parameters for the BERTopic model itself.
+bertopic_params:
+  min_topic_size: 10
+
 # General data processing settings for topic modeling.
 data_processing:
   # The text fields from the bibliography to concatenate for analysis.
