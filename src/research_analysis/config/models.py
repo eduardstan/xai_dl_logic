@@ -123,6 +123,7 @@ class ThresholdParams(BaseModel):
     max_papers_per_cluster: int = 200
     cluster_thresholds: Dict[str, int]
 
+
 class SelectionStrategyConfig(BaseModel):
     method: Literal["diverse_representative", "centroid_based"] = "diverse_representative"
     count_method: Literal["ratio_based", "threshold_based"] = "ratio_based"
@@ -130,7 +131,12 @@ class SelectionStrategyConfig(BaseModel):
     threshold_params: ThresholdParams
 
 class MetricsConfig(BaseModel):
-    diversity_weight: float = 0.75
+    diversity_weight: float = Field(
+        0.75,
+        ge=0.0,
+        le=1.0,
+        description="Weight for diversity in the representativeness score (0.0=centrality, 1.0=diversity).",
+    )
     similarity_threshold: float = 0.8
     use_iterative_selection: bool = True
     selection_iterations: int = 20
