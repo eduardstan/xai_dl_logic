@@ -1,0 +1,210 @@
+# BERTopic Analysis Configuration
+# Project: XAI Deep Learning Logic Bibliography Analysis
+
+# Model Configuration
+embedding_model:
+  name: "all-MiniLM-L6-v2"  # Fast and efficient for academic texts
+  batch_size: 64  # Will auto-adjust based on available device
+  show_progress: true
+  device: "auto"  # Auto-detect best available device (cuda/cpu)
+
+umap_params:
+  n_neighbors: 15
+  n_components: 128
+  min_dist: 0.0
+  metric: "cosine"
+  # random_state will be set from main random_seed for consistency
+
+hdbscan_params:
+  min_cluster_size: 16
+  max_cluster_size: 128         # NEW: Prevents clusters >10% of corpus
+  min_samples: 5
+  cluster_selection_epsilon: 0.1  # NEW: Finer granularity control
+  metric: "euclidean"
+  cluster_selection_method: "eom"
+  prediction_data: true  # Enable prediction data for probabilities
+  # Note: HDBSCAN doesn't support random_state parameter (inherently deterministic)
+
+# Visualization Configuration
+visualization:
+  hide_document_hover: false  # Allow hovering to see document content
+  reduce_embeddings_for_viz: true
+  interactive_datamapplot: true
+  save_plots: true
+  plot_format: "html"
+
+# Data Processing
+data:
+  min_topic_size: 10
+  topics: "auto"  # Let BERTopic determine optimal number
+  calculate_probabilities: false  # Disable due to BERTopic compatibility issue
+  text_fields:
+    - "abstract"
+    - "title"
+    - "keywords"
+
+# Outlier Reduction Configuration
+outlier_reduction:
+  enabled: true
+  # Strategy options: "probabilities", "distributions", "c-tf-idf", "embeddings"
+  # Multiple strategies can be chained together
+  strategies:
+    # Primary strategy - fast and effective using c-TF-IDF similarity
+    - strategy: "c-tf-idf"
+      threshold: 0.1  # Minimum similarity for assignment
+      
+    # Secondary strategy for remaining outliers - using document embeddings
+    - strategy: "embeddings" 
+      threshold: 0.7  # Cosine similarity threshold for embeddings
+        
+    # Final strategy using topic distributions - more thorough but slower
+    - strategy: "distributions"
+      threshold: 0.05  # More lenient threshold for remaining outliers
+      distributions_params:
+        min_similarity: 0.05
+        window: 4
+        stride: 1
+      
+  # Update topic representations after outlier reduction
+  # NOTE: We preserve original topic representations for quality topic names
+  update_representations: false
+  
+  # Logging and analysis
+  save_intermediate_results: true
+
+# Output Configuration
+output:
+  results_dir: "results"
+  models_dir: "models"
+  plots_dir: "plots"
+  save_model: true
+  save_embeddings: true
+  save_topics: true
+  cache_embeddings: true  # Cache embeddings to avoid recomputation
+  cache_dir: "cache"
+
+# Systematic Review Configuration
+systematic_review:
+  # Paper selection strategy
+  selection_strategy: "diverse_representative"  # Options: "centroid_based", "diverse_representative"
+  
+  # Selection method type: "threshold_based" or "ratio_based"
+  selection_strategy_type: "ratio_based"  # Options: "threshold_based", "ratio_based"
+  
+  # Threshold-based selection parameters (original method)
+  # Dynamic paper selection based on cluster size
+  base_papers_per_cluster: 4  # Minimum papers per cluster
+  max_papers_per_cluster: 200   # Maximum papers per cluster
+  
+  # Cluster size thresholds for paper selection
+  cluster_thresholds:
+    small: 20    # <= 20 papers: select base_papers_per_cluster
+    medium: 40   # 21-40 papers: select base_papers_per_cluster + 1
+    large: 80    # 41-80 papers: select base_papers_per_cluster + 2
+    xlarge: 150  # 81-150 papers: select base_papers_per_cluster + 3
+    xxlarge: 300 # 151-300 papers: select base_papers_per_cluster + 4
+    # >300 papers: select max_papers_per_cluster (change the above variable to 10)
+  
+  # Ratio-based selection parameters (new method)
+  # Selects approximately the same percentage from each cluster
+  target_selection_ratio: 0.15  # Select ~15% of papers from each cluster
+  min_papers_per_cluster: 2     # Minimum papers even for small clusters
+  
+  # Diversity selection parameters
+  diversity_weight: 0.75  # Balance between centrality (0.0) and diversity (1.0)
+  similarity_threshold: 0.8  # Minimum similarity for paper assignment
+  min_diversity_threshold: 0.25  # Minimum diversity score to consider a paper
+  use_iterative_selection: true  # Use iterative optimization instead of greedy
+  selection_iterations: 20 # Number of optimization iterations
+  
+  # Metrics to compute for each paper
+  compute_metrics:
+    - "similarity_to_centroid"
+    - "similarity_to_cluster_papers" 
+    - "diversity_score"
+    - "representativeness_score"
+  
+  # Research focus alignment (using wildcards from original query)
+  research_keywords:
+    xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
+    symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
+    subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
+# Domain Knowledge Injection
+domain_guidance:
+  # Seed words for topic representation enhancement
+  seed_words:
+    enabled: false
+    multiplier: 2.0
+    # Mix of single words and multi-word phrases for domain concepts
+    words: [
+      # Explainability and Interpretability (XAI)
+      "explainable", "interpretable", "accountable", "explicable", "transparent", "translucent",
+      "explainability", "interpretability", "accountability", "explicability", "transparency", "translucency",
+      "XAI", "IML",
+      # Symbolic and Logical Reasoning (symbolic)
+      "symbolic", "logic", "logical", "formal", "knowledge", "semantic", "semantics",
+      "decision tree", "decision list", "decision set", 
+      "knowledge-base", "knowledege base",
+      "ontology", "ontological", "ontology-based", "ontology-guided",
+      "constraint", "rule", "rules", "reasoning", 
+      "predicate", "clause", "formula", "if then", "if-then", "horn",
+      # Fuzzy and Neuro-Fuzzy Systems (fuzzy)
+      "fuzzy", "neurofuzzy", "neuro-fuzzy", "tsk",
+      # Neuro-Symbolic and Semantic Reasoning (neuro-symbolic)
+      "neurosymbolic", "neuro-symbolic",   
+      # Neural Network Architecture (neural)
+      "transformer", "attention", "embedding", "gradient",
+      "cnn", "convolution", "convolutional", "filter", "pooling",
+      "rnn", "recurrent", "recurrent neural network", "lstm", "gru",
+      "gnn", "graph", "node", "edge", "adjacency",
+      "bert", "self-attention", "encoder",
+      "spike", "spiking", "spiking neural network", "snn", 
+      "differentiable", "differentiability", 
+      # Other Deep Learning Techniques (deep)
+      "deep", "reinforcement", "neural", "network", 
+      # "surrogate", "global", "model-agnostic", "local",
+    ]
+    
+  # Guided Topic Modeling - Phase 3: Fine-Grained Taxonomy-Aligned Topics
+  guided_topics:
+    enabled: false
+    # Define fine-grained guided topics reflecting specific methodologies within XAI domains
+    topics:
+      # Neural Network Architecture - Standard Deep Learning
+      convolutional_networks:
+        seeds: ["cnn", "convolution", "convolutional", "filter", "pooling"]
+      transformer_attention:
+        seeds: ["transformer", "attention", "bert", "self-attention", "encoder"]
+      graph_neural_networks:
+        seeds: ["gnn", "graph", "node", "edge", "adjacency"]
+      
+      # Rule Formalism and Representation  
+      fuzzy_logic_systems:
+        seeds: ["fuzzy", "membership", "linguistic", "defuzzification", "rule"]
+      decision_tree_methods:
+        seeds: ["tree", "forest", "split", "leaf", "branch"]
+      first_order_logic:
+        seeds: ["predicate", "clause", "horn", "resolution", "unification"]
+      
+      # Hybrid and Integration Approaches
+      neuro_symbolic_integration:
+        seeds: ["neuro-symbolic", "neural-symbolic", "integration", "hybrid", "reasoning"]
+      neuro_fuzzy_systems:
+        seeds: ["neuro-fuzzy", "anfis", "adaptive", "membership", "neural"]
+      
+      # Explainability Methods
+      local_explanation_methods:
+        seeds: ["lime", "shap", "local", "perturbation", "surrogate"]
+      global_explanation_methods:
+        seeds: ["global", "model-agnostic", "permutation", "partial", "dependence"]
+    
+    # Following BERTopic documentation - only use seed_topic_list parameter
+    # BERTopic handles guided topics automatically from the seeds above
+    
+  representation_models:
+    enabled: false
+    # Will be added if custom representations needed
+
+# Reproducibility
+random_seed: 42
+timestamp_format: "%Y%m%d_%H%M%S" 
