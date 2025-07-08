@@ -9,21 +9,16 @@ from typing import Optional, Union
 
 from loguru import logger
 
+from research_analysis.config.models import LoggingConfig
 
-def setup_logging(
-    level: str = "INFO",
-    log_file: Optional[Union[str, Path]] = None,
-    rotation: str = "10 MB",
-    retention: str = "1 week",
-) -> None:
+
+def setup_logging(config: LoggingConfig, log_file: Optional[Union[str, Path]] = None) -> None:
     """
     Configure loguru logging with structured format and optional file output.
 
     Args:
-        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Optional path to log file for persistent logging
-        rotation: Log rotation size (e.g., "10 MB", "1 GB")
-        retention: Log retention period (e.g., "1 week", "30 days")
+        config: A Pydantic model containing logging settings (level, rotation, retention).
+        log_file: Optional path to log file for persistent logging.
     """
     # Remove default handler to avoid duplicate logs
     logger.remove()
@@ -31,7 +26,7 @@ def setup_logging(
     # Console handler with colors and emojis
     logger.add(
         sys.stdout,
-        level=level,
+        level=config.level,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
         "<level>{level: <8}</level> | "
         "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
@@ -46,10 +41,10 @@ def setup_logging(
 
         logger.add(
             log_path,
-            level=level,
+            level=config.level,
             format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
-            rotation=rotation,
-            retention=retention,
+            rotation=config.rotation,
+            retention=config.retention,
             compression="zip",
         )
         logger.info(f"📄 Logging to file: {log_path}")

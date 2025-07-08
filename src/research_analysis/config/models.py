@@ -26,6 +26,7 @@ class LoggingConfig(BaseModel):
 
 class ReproducibilityConfig(BaseModel):
     random_seed: int = 42
+    timestamp_format: str = "%Y%m%d_%H%M%S"
 
 class PipelineConfig(BaseModel):
     paths: PathsConfig = Field(default_factory=PathsConfig)

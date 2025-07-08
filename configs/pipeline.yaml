@@ -32,4 +32,6 @@ logging:
 # Ensures that processes with a random component (like UMAP) are reproducible.
 reproducibility:
   # A global random seed for all stochastic processes.
-  random_seed: 42 
+  random_seed: 42
+  # The format for the timestamped output directories.
+  timestamp_format: "%Y%m%d_%H%M%S" 

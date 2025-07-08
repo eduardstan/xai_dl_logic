@@ -189,7 +189,3 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 -   **Rationale:** Finalizes the refactoring, leaving a clean, professional, and well-documented project.
 -   **Testing:** A final check of the repository to ensure no legacy files remain.
 -   **Commit:** `chore: Remove legacy scripts and update documentation`
-
-## 4. Next Steps
-
-This plan is far more detailed and addresses the core architectural issues we've identified. Please review it. If you approve, I will delete the old plan and proceed with **Step 1.1: Create `pyproject.toml` and New Directory Structure**. 
