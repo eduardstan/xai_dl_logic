@@ -66,7 +66,9 @@ research_analysis/
 │       │   │   ├── __init__.py          # Orchestrates stage 2
 │       │   │   ├── data_loader.py
 │       │   │   ├── metrics.py
+│       │   │   ├── cluster_analysis.py
 │       │   │   ├── selection.py
+│       │   │   ├── research_alignment.py
 │       │   │   └── report.py
 │       │   └── stage_3_visualization/
 │       │       ├── __init__.py          # Orchestrates stage 3
@@ -158,9 +160,9 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 **➡️ Step 3.2: Consolidate Stage 2 (Paper Selection)**
 -   **Action:**
     1.  Create the `src/research_analysis/stages/stage_2_paper_selection/` subdirectory.
-    2.  Move the logic from `advanced_systematic_analyzer.py`'s dependencies (`data_loader.py`, `topic_processor.py`, `paper_selection.py`, etc.) into new, aptly named modules inside this directory.
+    2.  Move the logic from `advanced_systematic_analyzer.py`'s dependencies (`data_loader.py`, `topic_processor.py`, `paper_selection.py`, `cluster_analysis.py`, `research_alignment.py`, etc.) into new, aptly named modules inside this directory, as detailed in the project structure above.
     3.  Create `src/research_analysis/pipeline/stage_2.py`. This will contain a `run_stage_2(config, stage_1_results_dir, output_dir)` function to orchestrate the stage.
--   **Rationale:** Follows the same consolidation pattern for the second stage, preserving modularity.
+-   **Rationale:** Follows the same consolidation pattern for the second stage, preserving the original modularity of the legacy code where distinct responsibilities were already separated.
 -   **Testing:** We will write a script to test `run_stage_2` using the artifacts from the previous Stage 1 run.
 -   **Commit:** `refactor: Consolidate paper selection logic into stage_2 submodule`
 

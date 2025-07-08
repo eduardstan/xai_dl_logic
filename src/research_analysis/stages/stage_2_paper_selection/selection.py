@@ -256,4 +256,59 @@ def _greedy_selection(
     except Exception as e:
         logger.error(f"Greedy selection failed: {e}", exc_info=True)
         # Fallback: return top N by centrality if greedy fails
-        return list(np.argsort(similarities_to_centroid)[-n_select:][::-1]) 
+        return list(np.argsort(similarities_to_centroid)[-n_select:][::-1])
+
+
+def assign_non_selected_papers(
+    cluster_embeddings: np.ndarray, selected_indices: List[int], config: AppConfig
+) -> dict:
+    """
+    Assigns each non-selected paper to its most similar representative.
+
+    Args:
+        cluster_embeddings: Embeddings for all papers in the cluster.
+        selected_indices: A list of local indices for the selected papers.
+        config: The application configuration.
+
+    Returns:
+        A dictionary mapping non-selected paper indices to their assignment info,
+        which includes the representative's index and the similarity score.
+    """
+    if not selected_indices:
+        logger.warning("No representatives selected, cannot assign papers.")
+        return {}
+    if len(cluster_embeddings) == 0:
+        logger.warning("Cluster embeddings are empty, cannot assign papers.")
+        return {}
+
+    assignments = {}
+    similarity_threshold = config.stage_2.metrics.similarity_threshold
+    selected_embeddings = cluster_embeddings[selected_indices]
+
+    all_indices = set(range(len(cluster_embeddings)))
+    non_selected_indices = list(all_indices - set(selected_indices))
+
+    if not non_selected_indices:
+        return {}
+
+    non_selected_embeddings = cluster_embeddings[non_selected_indices]
+
+    # Compute similarities in a batch
+    from sklearn.metrics.pairwise import cosine_similarity
+    similarity_matrix = cosine_similarity(
+        non_selected_embeddings, selected_embeddings
+    )
+
+    # Find the best representative for each non-selected paper
+    best_rep_indices = np.argmax(similarity_matrix, axis=1)
+    best_similarities = np.max(similarity_matrix, axis=1)
+
+    for i, original_idx in enumerate(non_selected_indices):
+        rep_local_idx = best_rep_indices[i]
+        assignments[original_idx] = {
+            "representative_idx": selected_indices[rep_local_idx],
+            "similarity": float(best_similarities[i]),
+            "is_similar": bool(best_similarities[i] >= similarity_threshold),
+        }
+
+    return assignments 
