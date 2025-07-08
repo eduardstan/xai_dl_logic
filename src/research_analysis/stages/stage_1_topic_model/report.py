@@ -82,29 +82,30 @@ def save_results(
     topic_info.to_csv(topic_info_path, index=False)
     logger.info(f"Topic info saved to: {topic_info_path}")
 
-    # Generate and save the summary report
+    # Generate and save the summary report, passing the corrected topic_info
     _generate_summary_report(
-        model, df, docs, list(topics), output_dir, config
+        topic_info=topic_info,
+        num_docs=len(docs),
+        topics=topics,
+        output_dir=output_dir,
+        config=config,
     )
 
 
 def _generate_summary_report(
-    model: BERTopic,
-    df: pd.DataFrame,
-    docs: List[str],
+    topic_info: pd.DataFrame,
+    num_docs: int,
     topics: List[int],
     output_dir: Path,
     config: AppConfig,
 ) -> None:
     """Generate and save a markdown summary report of the analysis."""
-    num_docs = len(docs)
-    num_topics = len(model.get_topic_info()) - (1 if -1 in model.get_topic_info()["Topic"] else 0)
+    num_topics = len(topic_info[topic_info["Topic"] != -1])
     num_outliers = topics.count(-1)
-    coverage = (num_docs - num_outliers) / num_docs * 100
+    coverage = (num_docs - num_outliers) / num_docs * 100 if num_docs > 0 else 0
 
     report = f"""# Stage 1: Topic Modeling Report
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
 ## 1. Overview
 - **Documents Processed:** {num_docs:,}
 - **Topics Discovered:** {num_topics}
@@ -119,7 +120,6 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ## 3. Top 10 Topics by Size
 """
-    topic_info = model.get_topic_info()
     top_10 = topic_info[topic_info["Topic"] != -1].head(10)
     for _, row in top_10.iterrows():
         report += f"- **Topic {row['Topic']}**: {row['Count']} docs - _{row['Name']}_\n"
