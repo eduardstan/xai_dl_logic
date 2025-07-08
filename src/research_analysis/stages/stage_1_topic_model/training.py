@@ -9,9 +9,6 @@ import numpy as np
 from bertopic import BERTopic
 
 from research_analysis.config.models import AppConfig
-from research_analysis.stages.stage_1_topic_model.outlier_reduction import (
-    apply_outlier_reduction,
-)
 from research_analysis.utils.logging import get_logger
 
 logger = get_logger()
@@ -24,7 +21,7 @@ def train_topic_model(
     config: AppConfig,
 ) -> Tuple[List[int], Optional[np.ndarray]]:
     """
-    Train the BERTopic model and apply outlier reduction.
+    Train the BERTopic model.
 
     Args:
         model: The configured BERTopic model instance.
@@ -33,7 +30,7 @@ def train_topic_model(
         config: The application's configuration object.
 
     Returns:
-        A tuple containing the final topic assignments and probabilities.
+        A tuple containing the initial topic assignments and probabilities.
     """
     logger.info("Starting BERTopic model training...")
     if len(docs) != len(embeddings):
@@ -46,13 +43,7 @@ def train_topic_model(
     topics, probs = model.fit_transform(docs, embeddings)
     _log_training_summary("Initial", docs, topics)
 
-    # Apply outlier reduction
-    final_topics, final_probs = apply_outlier_reduction(
-        model, docs, topics, probs, embeddings, config
-    )
-    _log_training_summary("Final", docs, final_topics)
-
-    return final_topics, final_probs
+    return topics, probs
 
 
 def _log_training_summary(

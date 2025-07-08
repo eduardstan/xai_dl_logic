@@ -48,7 +48,10 @@ research_analysis/
 │       │   └── models.py          # Pydantic models for config files
 │       ├── pipeline/
 │       │   ├── __init__.py
-│       │   └── orchestrator.py    # Main pipeline execution logic
+│       │   ├── orchestrator.py    # Main pipeline execution logic
+│       │   ├── stage_1.py         # Orchestrates stage 1 execution
+│       │   ├── stage_2.py         # Orchestrates stage 2 execution
+│       │   └── stage_3.py         # Orchestrates stage 3 execution
 │       ├── stages/
 │       │   ├── __init__.py
 │       │   ├── stage_1_topic_model/
@@ -57,7 +60,8 @@ research_analysis/
 │       │   │   ├── embeddings.py
 │       │   │   ├── model_setup.py
 │       │   │   ├── training.py
-│       │   │   └── outlier_reduction.py
+│       │   │   ├── outlier_reduction.py
+│       │   │   └── report.py
 │       │   ├── stage_2_paper_selection/
 │       │   │   ├── __init__.py          # Orchestrates stage 2
 │       │   │   ├── data_loader.py
@@ -145,26 +149,26 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 **➡️ Step 3.1: Consolidate Stage 1 (Topic Modeling)**
 -   **Action:**
     1.  Create the `src/research_analysis/stages/stage_1_topic_model/` subdirectory.
-    2.  Move the logic from `bibliography.py`, `embeddings.py`, `bertopic_setup.py`, `topic_training.py`, and `outlier_reduction.py` into their corresponding new files within this directory.
-    3.  The `__init__.py` file will contain a single function, `run_stage_1(config, output_dir)`, that orchestrates the calls to the other modules in its directory.
--   **Rationale:** Consolidates all related logic for the first stage into a cohesive, yet still modular, submodule. The caching logic will be updated to use the simplified, hash-free filenames from the root `cache/` directory.
--   **Testing:** We will write a temporary script that imports and calls `run_stage_1` to verify it correctly uses the existing cache and produces the same results in the new `outputs/` structure.
+    2.  Move the logic from `bibliography.py`, `embeddings.py`, `bertopic_setup.py`, `topic_training.py`, `outlier_reduction.py`, and the newly renamed `report.py` into their corresponding new files within this directory.
+    3.  Create `src/research_analysis/pipeline/stage_1.py`. This file will contain a single function, `run_stage_1(config, output_dir)`, that orchestrates the calls to the other modules. It will call `training` and `outlier_reduction` sequentially to ensure they are decoupled.
+-   **Rationale:** Consolidates all related logic for the first stage into a cohesive submodule, with a clear, decoupled orchestrator in the `pipeline` directory. The caching logic will be updated to use the simplified, hash-free filenames from the root `cache/` directory.
+-   **Testing:** We will write a temporary script that imports and calls `run_stage_1` to verify it correctly uses the existing cache and produces the same results in a persistent `outputs/` directory.
 -   **Commit:** `refactor: Consolidate topic modeling logic into stage_1 submodule`
 
 **➡️ Step 3.2: Consolidate Stage 2 (Paper Selection)**
 -   **Action:**
     1.  Create the `src/research_analysis/stages/stage_2_paper_selection/` subdirectory.
     2.  Move the logic from `advanced_systematic_analyzer.py`'s dependencies (`data_loader.py`, `topic_processor.py`, `paper_selection.py`, etc.) into new, aptly named modules inside this directory.
-    3.  The `__init__.py` will contain a `run_stage_2(config, stage_1_results, output_dir)` function to orchestrate the stage.
+    3.  Create `src/research_analysis/pipeline/stage_2.py`. This will contain a `run_stage_2(config, stage_1_results_dir, output_dir)` function to orchestrate the stage.
 -   **Rationale:** Follows the same consolidation pattern for the second stage, preserving modularity.
--   **Testing:** We will write a script to test `run_stage_2` using the artifacts from the previous test run.
+-   **Testing:** We will write a script to test `run_stage_2` using the artifacts from the previous Stage 1 run.
 -   **Commit:** `refactor: Consolidate paper selection logic into stage_2 submodule`
 
 **➡️ Step 3.3: Consolidate Stage 3 (Visualization)**
 -   **Action:**
     1.  Create the `src/research_analysis/stages/stage_3_visualization/` subdirectory.
     2.  Merge the logic from `create_enhanced_research_visualization.py` and its many `visualization_*.py` and `report_generation.py` dependencies into this new submodule.
-    3.  The `__init__.py` will contain a `run_stage_3(config, stage_2_results, output_dir)` function.
+    3.  Create `src/research_analysis/pipeline/stage_3.py`. This will contain a `run_stage_3(config, stage_2_results_dir, output_dir)` function.
 -   **Rationale:** Completes the logical consolidation of the pipeline.
 -   **Testing:** We will write a script to test `run_stage_3` and verify its output.
 -   **Commit:** `refactor: Consolidate all visualization logic into stage_3 submodule`
@@ -175,7 +179,7 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 
 **➡️ Step 4.1: Build the Pipeline Orchestrator and CLI**
 -   **Action:**
-    1.  Create `src/research_analysis/pipeline/orchestrator.py`. This will have a main `run_pipeline()` function that calls the three stage functions in order, passing data between them in memory and handling the creation of the timestamped output directory.
+    1.  Create `src/research_analysis/pipeline/orchestrator.py`. This will have a main `run_pipeline()` function that imports and calls the three `run_stage_*` functions in order, handling the creation of the timestamped output directory and passing paths between stages.
     2.  Create `src/research_analysis/main.py`. This will use `Typer` to create the CLI, with commands to run the full pipeline (`run-pipeline`) or individual stages.
     3.  Update `pyproject.toml` to link the CLI entry point to this file.
 -   **Rationale:** This creates the final, user-facing application, providing a clean and powerful interface to the entire workflow.

@@ -84,23 +84,19 @@ def apply_outlier_reduction(
             continue
 
     final_outliers = sum(1 for t in current_topics if t == -1)
-    if final_outliers < initial_outliers:
-        logger.info(
-            "Outlier reduction complete. "
-            f"Total reassigned: {initial_outliers - final_outliers}. "
-            f"Final outlier count: {final_outliers}."
-        )
-        if not reduction_config.update_representations:
-            logger.info("Preserving original topic representations as per config.")
-            model.update_topics(docs, topics=current_topics)
-        else:
-            logger.warning("Updating topic representations. This may change topic meanings.")
-            # Note: The original logic did not have an explicit update step.
-            # This branch is for future use if needed, but default is to preserve.
-            model.topics_ = current_topics
+    logger.info(
+        "Outlier reduction complete. "
+        f"Total reassigned: {initial_outliers - final_outliers}. "
+        f"Final outlier count: {final_outliers}."
+    )
 
-
+    if not reduction_config.update_representations:
+        logger.info("Preserving original topic representations by manually updating assignments.")
+        model.topics_ = current_topics
     else:
-        logger.info("Outlier reduction strategies did not reassign any documents.")
+        logger.warning("Updating topic representations. This may change topic meanings.")
+        model.update_topics(docs, topics=current_topics)
 
-    return current_topics, current_probs 
+    # Return the final topics and the original probabilities, as re-calculating
+    # them without also re-training the model is not straightforward.
+    return current_topics, probs 
