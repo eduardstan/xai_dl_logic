@@ -1,0 +1,35 @@
+#
+# Main Pipeline Configuration
+#
+# This file contains high-level settings that apply to the entire
+# research_analysis pipeline, such as path definitions and global parameters.
+#
+
+# Input and Output Path Configuration
+# Defines the location for data sources and where all artifacts (logs, models,
+# results, plots) will be saved.
+paths:
+  # Source .bib file for the analysis.
+  bibliography_file: "data/merged.bib"
+  # Top-level directory for all generated outputs.
+  # A timestamped subdirectory will be created here for each pipeline run.
+  outputs: "outputs"
+  # Subdirectory within a run's output folder for log files.
+  logs: "logs"
+  # Subdirectory for cached data (e.g., parsed .bib, embeddings).
+  cache: "cache"
+
+# Logging Configuration
+logging:
+  # Log level for console output. Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  # Log rotation size.
+  rotation: "10 MB"
+  # Log retention period.
+  retention: "1 week"
+
+# Global Reproducibility Settings
+# Ensures that processes with a random component (like UMAP) are reproducible.
+reproducibility:
+  # A global random seed for all stochastic processes.
+  random_seed: 42 

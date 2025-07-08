@@ -1,0 +1,63 @@
+#
+# Stage 2: Paper Selection Configuration
+#
+# Parameters for the systematic review process, including selection
+# strategies, metric calculations, and research alignment.
+#
+
+# Defines the strategy for selecting representative papers from each topic.
+selection_strategy:
+  # Method for choosing papers. Options:
+  # "diverse_representative": Balances centrality and diversity.
+  # "centroid_based": Selects papers closest to the topic centroid.
+  method: "diverse_representative"
+
+  # How to determine the number of papers to select. Options:
+  # "ratio_based": Selects a fixed percentage of papers from each cluster.
+  # "threshold_based": Selects a variable number based on cluster size tiers.
+  count_method: "ratio_based"
+
+  # --- Parameters for "ratio_based" count_method ---
+  ratio_params:
+    # The target percentage of papers to select from each cluster.
+    target_selection_ratio: 0.15
+    # The minimum number of papers to select, even for very small clusters.
+    min_papers_per_cluster: 2
+
+  # --- Parameters for "threshold_based" count_method ---
+  threshold_params:
+    # Minimum papers to select per cluster.
+    base_papers_per_cluster: 4
+    # Absolute maximum papers to select, regardless of cluster size.
+    max_papers_per_cluster: 200
+    # Defines the tiers for selecting papers based on cluster size.
+    cluster_thresholds:
+      small: 20    # <= 20 papers: select base_papers
+      medium: 40   # 21-40 papers: select base_papers + 1
+      large: 80    # 41-80 papers: select base_papers + 2
+      xlarge: 150  # 81-150 papers: select base_papers + 3
+      xxlarge: 300 # > 150 papers: select base_papers + 4
+
+# Parameters for calculating the diversity and representativeness of papers.
+metrics:
+  # The weight given to diversity vs. centrality in the representativeness score.
+  # 0.0 = 100% centrality, 1.0 = 100% diversity.
+  diversity_weight: 0.75
+  # Minimum cosine similarity for a paper to be considered part of a cluster's core.
+  similarity_threshold: 0.8
+  # Use an iterative optimization process for selection instead of a greedy one.
+  use_iterative_selection: true
+  # Number of iterations for the optimization process.
+  selection_iterations: 20
+  # The list of metrics to compute for each paper.
+  compute:
+    - "similarity_to_centroid"
+    - "similarity_to_cluster_papers"
+    - "diversity_score"
+    - "representativeness_score"
+
+# Defines keyword sets for aligning papers with specific research domains.
+research_alignment:
+  xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
+  symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "rule*", "reasoning"]
+  subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic"] 
