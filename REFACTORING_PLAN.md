@@ -34,8 +34,8 @@ research_analysis/
 ├── data/
 │   └── merged.bib                 # Source bibliography data
 ├── cache/
-│   ├── parsed_bib.pkl             # Cached parsed bibliography
-│   └── embeddings.pkl             # Cached document embeddings
+│   ├── parsed_bib.pkl             # Cached data to speed up runs
+│   └── embeddings_all-MiniLM-L6.pkl
 ├── pyproject.toml                 # Project definition and dependencies
 ├── README.md                      # Updated documentation
 ├── src/
@@ -92,7 +92,7 @@ research_analysis/
 
 ### 2.3. Key Architectural Decisions
 
-1.  **Unified Output Directory (`outputs/`):** All pipeline runs will generate a single, timestamped directory inside `outputs/`. This directory will contain subdirectories for each stage's artifacts, solving the `bertopic_analysis/` vs `results/` problem and making each run self-contained. The `cache/` directory, however, will live at the project root to persist across runs.
+1.  **Unified Output Directory (`outputs/`):** All pipeline runs will generate a single, timestamped directory inside `outputs/`. This directory will contain subdirectories for each stage's artifacts, solving the `bertopic_analysis/` vs `results/` problem and making each run self-contained.
 2.  **Staged Configuration (`configs/`):** The `config.yaml` will be split into files that correspond to pipeline stages. Pydantic models in `src/research_analysis/config/` will load and validate them into a single, strongly-typed object.
 3.  **Pipeline-Oriented Code (`src/research_analysis/`):**
     -   `main.py` will define the CLI using `Typer`.
@@ -147,8 +147,8 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
     1.  Create the `src/research_analysis/stages/stage_1_topic_model/` subdirectory.
     2.  Move the logic from `bibliography.py`, `embeddings.py`, `bertopic_setup.py`, `topic_training.py`, and `outlier_reduction.py` into their corresponding new files within this directory.
     3.  The `__init__.py` file will contain a single function, `run_stage_1(config, output_dir)`, that orchestrates the calls to the other modules in its directory.
--   **Rationale:** Consolidates all related logic for the first stage into a cohesive, yet still modular, submodule.
--   **Testing:** We will write a temporary script that imports and calls `run_stage_1` to verify it produces the same results in the new `outputs/` structure.
+-   **Rationale:** Consolidates all related logic for the first stage into a cohesive, yet still modular, submodule. The caching logic will be updated to use the simplified, hash-free filenames from the root `cache/` directory.
+-   **Testing:** We will write a temporary script that imports and calls `run_stage_1` to verify it correctly uses the existing cache and produces the same results in the new `outputs/` structure.
 -   **Commit:** `refactor: Consolidate topic modeling logic into stage_1 submodule`
 
 **➡️ Step 3.2: Consolidate Stage 2 (Paper Selection)**
@@ -189,3 +189,7 @@ This plan is designed to be executed in small, safe, and verifiable steps. I wil
 -   **Rationale:** Finalizes the refactoring, leaving a clean, professional, and well-documented project.
 -   **Testing:** A final check of the repository to ensure no legacy files remain.
 -   **Commit:** `chore: Remove legacy scripts and update documentation`
+
+## 4. Next Steps
+
+This plan is far more detailed and addresses the core architectural issues we've identified. Please review it. If you approve, I will delete the old plan and proceed with **Step 1.1: Create `pyproject.toml` and New Directory Structure**. 

@@ -16,7 +16,7 @@ paths:
   outputs: "outputs"
   # Subdirectory within a run's output folder for log files.
   logs: "logs"
-  # Directory for cached data (e.g., parsed .bib, embeddings), at the project root.
+  # Path to the root-level directory for cached data (e.g., parsed .bib, embeddings).
   cache: "cache"
 
 # Logging Configuration
