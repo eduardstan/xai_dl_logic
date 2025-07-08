@@ -28,55 +28,62 @@ def get_file_hash(file_path: Union[str, Path]) -> str:
     return sha256.hexdigest()
 
 
-def cache_exists(cache_dir: Path, cache_name: str) -> bool:
+def get_cache_path(cache_dir: Union[str, Path], file_name: str) -> Path:
+    """
+    Constructs the full path for a cache file.
+
+    Args:
+        cache_dir: The directory where caches are stored.
+        file_name: The name of the cache file (e.g., 'parsed_bib.pkl').
+
+    Returns:
+        The full Path object for the cache file.
+    """
+    return Path(cache_dir) / file_name
+
+
+def cache_exists(cache_path: Path) -> bool:
     """
     Check if a given cache file exists.
 
     Args:
-        cache_dir: The directory where caches are stored.
-        cache_name: The name of the specific cache file.
+        cache_path: The full path to the cache file.
 
     Returns:
         True if the cache file exists, False otherwise.
     """
-    return (cache_dir / f"{cache_name}.pkl").exists()
+    return cache_path.exists()
 
 
-def save_to_cache(
-    data: Any, cache_dir: Path, cache_name: str, compress: bool = True
-) -> None:
+def save_to_cache(data: Any, cache_path: Path, compress: bool = True) -> None:
     """
-    Save data to a pickle file in the specified cache directory.
+    Save data to a pickle file at the specified path.
 
     Args:
         data: The Python object to cache.
-        cache_dir: The directory where the cache will be stored.
-        cache_name: The name for the cache file (without extension).
+        cache_path: The full path where the cache will be stored.
         compress: Whether to use pickle's compression.
     """
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_path = cache_dir / f"{cache_name}.pkl"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with open(cache_path, "wb") as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL if compress else 4)
-        logger.info(f"💾 Saved {cache_name} to cache ({cache_path.stat().st_size / 1e6:.2f} MB)")
+        logger.info(f"💾 Saved to cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
     except Exception as e:
-        logger.error(f"❌ Failed to save {cache_name} to cache: {e}")
+        logger.error(f"❌ Failed to save to cache: {cache_path}: {e}")
         raise
 
 
-def load_from_cache(cache_dir: Path, cache_name: str) -> Any:
+def load_from_cache(cache_path: Path) -> Any:
     """
-    Load data from a pickle file in the specified cache directory.
+    Load data from a pickle file from the specified path.
 
     Args:
-        cache_dir: The directory where caches are stored.
-        cache_name: The name of the cache file to load.
+        cache_path: The full path of the cache file to load.
 
     Returns:
         The deserialized Python object from the cache.
     """
-    cache_path = cache_dir / f"{cache_name}.pkl"
     if not cache_path.exists():
         logger.warning(f"Cache file not found: {cache_path}")
         return None
@@ -84,8 +91,8 @@ def load_from_cache(cache_dir: Path, cache_name: str) -> Any:
     try:
         with open(cache_path, "rb") as f:
             data = pickle.load(f)
-        logger.info(f"📂 Loaded {cache_name} from cache ({cache_path.stat().st_size / 1e6:.2f} MB)")
+        logger.info(f"📂 Loaded from cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
         return data
     except Exception as e:
-        logger.error(f"❌ Failed to load {cache_name} from cache: {e}")
+        logger.error(f"❌ Failed to load from cache: {cache_path}: {e}")
         raise 
