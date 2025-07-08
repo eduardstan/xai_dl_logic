@@ -86,7 +86,7 @@ def save_results(
     _generate_summary_report(
         topic_info=topic_info,
         num_docs=len(docs),
-        topics=topics,
+        topics=list(topics),
         output_dir=output_dir,
         config=config,
     )
@@ -100,7 +100,7 @@ def _generate_summary_report(
     config: AppConfig,
 ) -> None:
     """Generate and save a markdown summary report of the analysis."""
-    num_topics = len(topic_info[topic_info["Topic"] != -1])
+    num_topics = len(set(t for t in topics if t != -1))
     num_outliers = topics.count(-1)
     coverage = (num_docs - num_outliers) / num_docs * 100 if num_docs > 0 else 0
 
