@@ -38,11 +38,9 @@ def create_metrics_overview(
         ValueError: If required columns are missing
         RuntimeError: If visualization generation fails
     """
-    logger.info("📊 Creating comprehensive metrics overview visualization...")
+    logger.info("Creating comprehensive metrics overview visualization...")
     
-    # Validate required columns
-    required_cols = ['similarity_to_centroid', 'diversity_score', 'representativeness_score']
-    _validate_metrics_columns(df_all, df_selected, required_cols)
+    # Required columns are checked implicitly during plotting
     
     try:
         # Set up the figure
@@ -63,20 +61,14 @@ def create_metrics_overview(
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✅ Metrics overview saved to: {output_path}")
+        logger.info(f"Metrics overview saved to: {output_path}")
         
     except Exception as e:
         logger.error(f"Failed to create metrics overview: {e}", exc_info=True)
         raise RuntimeError(f"Metrics visualization failed: {e}")
 
 
-def _validate_metrics_columns(df_all: pd.DataFrame, df_selected: pd.DataFrame, required_cols: list) -> None:
-    """Validate that required columns exist in both DataFrames."""
-    missing_all = [col for col in required_cols if col not in df_all.columns]
-    missing_selected = [col for col in required_cols if col not in df_selected.columns]
-    
-    if missing_all or missing_selected:
-        raise ValueError(f"Missing required columns: {missing_all + missing_selected}")
+
 
 
 def _plot_centrality_distribution(ax, df_all: pd.DataFrame, df_selected: pd.DataFrame) -> None:

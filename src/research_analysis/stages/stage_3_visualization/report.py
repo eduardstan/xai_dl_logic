@@ -40,7 +40,7 @@ def generate_enhanced_statistics_report(
     Raises:
         RuntimeError: If report generation fails
     """
-    logger.info("📋 Generating enhanced statistics report...")
+    logger.info("Generating enhanced statistics report...")
     
     try:
         report_path = output_dir / "enhanced_analysis_report.md"
@@ -62,7 +62,7 @@ def generate_enhanced_statistics_report(
         with report_path.open("w", encoding="utf-8") as f:
             f.write(report_content)
         
-        logger.info(f"✅ Enhanced statistics report saved to: {report_path}")
+        logger.info(f"Enhanced statistics report saved to: {report_path}")
         return report_path
         
     except Exception as e:

@@ -74,12 +74,16 @@ research_analysis/
 │       │   └── stage_3_visualization/
 │       │       ├── __init__.py          # Orchestrates stage 3
 │       │       ├── data_loader.py
-│       │       ├── plots.py
-│       │       └── report.py
+│       │       ├── metrics.py           # Static metrics visualizations
+│       │       ├── selection_plots.py   # Selection analysis plots  
+│       │       ├── dashboards.py        # Interactive Plotly dashboards
+│       │       ├── network.py           # Paper assignment networks
+│       │       └── report.py            # Enhanced statistics report
 │       └── utils/
 │           ├── __init__.py
 │           ├── files.py           # File I/O, caching, path helpers
-│           └── logging.py         # Logging setup
+│           ├── logging.py         # Logging setup
+│           └── math.py            # Mathematical utility functions
 └── outputs/                       # Unified output directory
     └── 20250708_103000/           # Example timestamped run directory
         ├── logs/
@@ -92,9 +96,12 @@ research_analysis/
         │   ├── selection_report.md
         │   └── ...
         └── stage_3_visualization/
-            ├── metrics_overview.png
-            ├── visualization_report.md
-            └── ...
+            ├── metrics_overview.png           # Comprehensive metrics visualization
+            ├── selection_analysis.png         # Selection strategy analysis
+            ├── paper_assignment_networks.png  # Network visualizations
+            ├── interactive_papers_explorer.html # Interactive papers dashboard
+            ├── topic_dashboard.html           # Topic comparison dashboard
+            └── enhanced_analysis_report.md    # Comprehensive analysis report
 ```
 
 ### 2.3. Key Architectural Decisions

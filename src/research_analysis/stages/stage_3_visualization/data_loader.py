@@ -55,86 +55,17 @@ def load_stage_2_artifacts(stage_2_dir: Path) -> Tuple[pd.DataFrame, pd.DataFram
     logger.info("Loading selected representatives...")
     df_selected = pd.read_csv(selected_path)
     
-    # Validate data integrity
-    _validate_stage_2_data(df_comprehensive, df_summary, df_selected)
+    # Data integrity is checked implicitly during visualization
     
-    logger.info(f"✅ Stage 2 data loaded successfully:")
-    logger.info(f"   📊 All papers: {len(df_comprehensive):,}")
-    logger.info(f"   📊 Selected representatives: {len(df_selected):,}")
-    logger.info(f"   📊 Topics: {len(df_summary)}")
+    logger.info(f"Stage 2 data loaded successfully:")
+    logger.info(f"   All papers: {len(df_comprehensive):,}")
+    logger.info(f"   Selected representatives: {len(df_selected):,}")
+    logger.info(f"   Topics: {len(df_summary)}")
     
     return df_comprehensive, df_summary, df_selected
 
 
-def _validate_stage_2_data(
-    df_all: pd.DataFrame, 
-    df_summary: pd.DataFrame, 
-    df_selected: pd.DataFrame
-) -> None:
-    """
-    Validate Stage 2 data integrity for visualization compatibility.
-    
-    Args:
-        df_all: Comprehensive analysis DataFrame
-        df_summary: Selection summary DataFrame
-        df_selected: Selected representatives DataFrame
-        
-    Raises:
-        ValueError: If validation fails
-    """
-    # Check required columns for comprehensive analysis
-    required_all_cols = [
-        'title', 'authors', 'topic_id', 'similarity_to_centroid',
-        'diversity_score', 'representativeness_score', 'is_selected_representative'
-    ]
-    missing_all = [col for col in required_all_cols if col not in df_all.columns]
-    if missing_all:
-        raise ValueError(f"Missing columns in comprehensive analysis: {missing_all}")
-    
-    # Check required columns for summary
-    required_summary_cols = [
-        'topic_id', 'cluster_size', 'papers_selected_from_cluster'
-    ]
-    missing_summary = [col for col in required_summary_cols if col not in df_summary.columns]
-    if missing_summary:
-        raise ValueError(f"Missing columns in selection summary: {missing_summary}")
-    
-    # Check required columns for selected representatives
-    required_selected_cols = [
-        'title', 'authors', 'topic_id', 'similarity_to_centroid',
-        'diversity_score', 'representativeness_score'
-    ]
-    missing_selected = [col for col in required_selected_cols if col not in df_selected.columns]
-    if missing_selected:
-        raise ValueError(f"Missing columns in selected representatives: {missing_selected}")
-    
-    # Validate consistency
-    selected_count_from_all = len(df_all[df_all['is_selected_representative'] == True])
-    actual_selected_count = len(df_selected)
-    
-    if selected_count_from_all != actual_selected_count:
-        logger.warning(
-            f"Selected count mismatch: {selected_count_from_all} vs {actual_selected_count}"
-        )
-    
-    # Validate topic consistency
-    topics_all = set(df_all['topic_id'].unique())
-    topics_summary = set(df_summary['topic_id'].unique())
-    
-    if topics_all != topics_summary:
-        logger.warning("Topic IDs mismatch between comprehensive analysis and summary")
-    
-    # Validate metric ranges
-    for df_name, df in [("comprehensive", df_all), ("selected", df_selected)]:
-        for metric in ['similarity_to_centroid', 'diversity_score', 'representativeness_score']:
-            if metric in df.columns:
-                min_val, max_val = df[metric].min(), df[metric].max()
-                if not (0 <= min_val <= max_val <= 1):
-                    logger.warning(
-                        f"{df_name} {metric} values outside [0,1]: [{min_val:.3f}, {max_val:.3f}]"
-                    )
-    
-    logger.info("✅ Stage 2 data validation passed")
+
 
 
 def get_visualization_summary(

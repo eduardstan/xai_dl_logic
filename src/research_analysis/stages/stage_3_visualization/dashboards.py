@@ -43,7 +43,7 @@ def create_interactive_visualizations(
         ValueError: If required columns are missing
         RuntimeError: If visualization generation fails
     """
-    logger.info("🌐 Creating interactive visualizations...")
+    logger.info("Creating interactive visualizations...")
     
     try:
         # Create papers explorer
@@ -52,7 +52,7 @@ def create_interactive_visualizations(
         # Create topic dashboard
         _create_topic_dashboard(df_all, df_selected, df_summary, output_dir)
         
-        logger.info("✅ Interactive visualizations completed")
+        logger.info("Interactive visualizations completed")
         
     except Exception as e:
         logger.error(f"Failed to create interactive visualizations: {e}", exc_info=True)
@@ -300,24 +300,4 @@ def create_simple_scatter_plot(df: pd.DataFrame, output_dir: Path, filename: str
         logger.error(f"Failed to create simple scatter plot: {e}")
 
 
-def validate_plotly_data(df: pd.DataFrame, required_cols: list) -> bool:
-    """
-    Validate DataFrame for Plotly visualization compatibility.
-    
-    Args:
-        df: DataFrame to validate
-        required_cols: List of required column names
-        
-    Returns:
-        True if data is valid, False otherwise
-    """
-    if df is None or len(df) == 0:
-        logger.warning("DataFrame is empty or None")
-        return False
-    
-    missing_cols = [col for col in required_cols if col not in df.columns]
-    if missing_cols:
-        logger.warning(f"Missing required columns: {missing_cols}")
-        return False
-    
-    return True 
+ 

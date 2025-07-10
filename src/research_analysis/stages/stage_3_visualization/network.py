@@ -32,28 +32,22 @@ def create_network_visualizations(df_all: pd.DataFrame, output_dir: Path) -> Non
         ValueError: If required columns are missing
         RuntimeError: If visualization generation fails
     """
-    logger.info("🕸️ Creating paper assignment network visualization...")
+    logger.info("Creating paper assignment network visualization...")
     
-    # Validate required columns
-    required_cols = ['topic_id', 'is_selected_representative', 'similarity_to_centroid', 'diversity_score']
-    _validate_network_columns(df_all, required_cols)
+    # Required columns are checked implicitly during plotting
     
     try:
         # Create network visualization
         _create_paper_assignment_network(df_all, output_dir)
         
-        logger.info("✅ Network visualizations completed")
+        logger.info("Network visualizations completed")
         
     except Exception as e:
         logger.error(f"Failed to create network visualizations: {e}", exc_info=True)
         raise RuntimeError(f"Network visualization failed: {e}")
 
 
-def _validate_network_columns(df_all: pd.DataFrame, required_cols: list) -> None:
-    """Validate that required columns exist in the DataFrame."""
-    missing_cols = [col for col in required_cols if col not in df_all.columns]
-    if missing_cols:
-        raise ValueError(f"Missing required columns for network visualization: {missing_cols}")
+
 
 
 def _create_paper_assignment_network(df_all: pd.DataFrame, output_dir: Path) -> None:

@@ -12,7 +12,7 @@ from research_analysis.config.models import AppConfig
 from research_analysis.stages.stage_3_visualization.data_loader import load_stage_2_artifacts
 from research_analysis.stages.stage_3_visualization.metrics import create_metrics_overview
 from research_analysis.stages.stage_3_visualization.selection_plots import create_selection_analysis
-from research_analysis.stages.stage_3_visualization.interactive import create_interactive_visualizations
+from research_analysis.stages.stage_3_visualization.dashboards import create_interactive_visualizations
 from research_analysis.stages.stage_3_visualization.network import create_network_visualizations
 from research_analysis.stages.stage_3_visualization.report import generate_enhanced_statistics_report
 from research_analysis.utils.logging import get_logger
@@ -37,7 +37,7 @@ def run_stage_3(
         FileNotFoundError: If Stage 2 artifacts are missing
         RuntimeError: If any visualization step fails critically
     """
-    logger.info("🚀 Starting Stage 3: Visualization and Reporting")
+    logger.info("Starting Stage 3: Visualization and Reporting")
     output_dir.mkdir(exist_ok=True, parents=True)
 
     try:
@@ -46,38 +46,38 @@ def run_stage_3(
         df_all, df_summary, df_selected = load_stage_2_artifacts(stage_2_input_dir)
 
         # 2. Create static visualizations
-        logger.info("📊 Creating metrics overview...")
+        logger.info("Creating metrics overview...")
         create_metrics_overview(df_all, df_selected, output_dir)
 
-        logger.info("📈 Creating selection analysis...")
+        logger.info("Creating selection analysis...")
         create_selection_analysis(df_summary, output_dir)
 
-        logger.info("🕸️ Creating network visualizations...")
+        logger.info("Creating network visualizations...")
         create_network_visualizations(df_all, output_dir)
 
         # 3. Create interactive visualizations
-        logger.info("🌐 Creating interactive visualizations...")
+        logger.info("Creating interactive visualizations...")
         create_interactive_visualizations(df_all, df_selected, df_summary, output_dir)
 
         # 4. Generate comprehensive report
-        logger.info("📋 Generating enhanced statistics report...")
+        logger.info("Generating enhanced statistics report...")
         report_path = generate_enhanced_statistics_report(df_all, df_selected, df_summary, output_dir)
 
         # 5. Log completion summary
         _log_completion_summary(df_all, df_selected, df_summary, output_dir)
 
-        logger.info("🎉 Stage 3 completed successfully!")
+        logger.info("Stage 3 completed successfully!")
 
     except Exception as e:
-        logger.error(f"❌ Stage 3 failed: {e}", exc_info=True)
+        logger.error(f"Stage 3 failed: {e}", exc_info=True)
         raise RuntimeError(f"Stage 3 visualization pipeline failed: {e}")
 
 
 def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path) -> None:
     """Log a summary of completed Stage 3 operations."""
-    logger.info("✅ Enhanced visualizations completed!")
-    logger.info(f"📁 All outputs saved to: {output_dir.absolute()}")
-    logger.info("📊 Generated files:")
+    logger.info("Enhanced visualizations completed!")
+    logger.info(f"All outputs saved to: {output_dir.absolute()}")
+    logger.info("Generated files:")
     logger.info("  - metrics_overview.png")
     logger.info("  - selection_analysis.png")
     logger.info("  - paper_assignment_networks.png")
@@ -90,24 +90,24 @@ def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path) -
     selected_papers = len(df_selected)
     total_topics = len(df_summary)
     
-    logger.info(f"📈 Analysis summary:")
+    logger.info(f"Analysis summary:")
     logger.info(f"  - {total_papers:,} total papers analyzed")
     logger.info(f"  - {selected_papers:,} representative papers selected")
     logger.info(f"  - {total_topics} topics with visualizations")
     logger.info(f"  - {selected_papers/total_papers:.2%} selection ratio")
 
     # Print final summary for user visibility
-    print(f"\n✅ Enhanced visualizations completed!")
-    print(f"📁 All outputs saved to: {output_dir.absolute()}")
-    print("📊 Generated files:")
+    print(f"\nEnhanced visualizations completed!")
+    print(f"All outputs saved to: {output_dir.absolute()}")
+    print("Generated files:")
     print("  - metrics_overview.png")
     print("  - selection_analysis.png")
     print("  - paper_assignment_networks.png")
     print("  - interactive_papers_explorer.html")
     print("  - topic_dashboard.html")
     print("  - enhanced_analysis_report.md")
-    print(f"\n📈 Analyzed {total_papers:,} papers across {total_topics} topics")
-    print(f"🎯 Selected {selected_papers:,} representatives ({selected_papers/total_papers:.2%} ratio)")
+    print(f"\nAnalyzed {total_papers:,} papers across {total_topics} topics")
+    print(f"Selected {selected_papers:,} representatives ({selected_papers/total_papers:.2%} ratio)")
 
 
 def validate_stage_2_artifacts(stage_2_dir: Path) -> bool:
@@ -131,7 +131,7 @@ def validate_stage_2_artifacts(stage_2_dir: Path) -> bool:
             logger.error(f"Missing required Stage 2 file: {filename}")
             return False
     
-    logger.info("✅ Stage 2 artifacts validation passed")
+    logger.info("Stage 2 artifacts validation passed")
     return True
 
 

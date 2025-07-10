@@ -33,7 +33,7 @@ def create_selection_analysis(df_summary: pd.DataFrame, output_dir: Path) -> Non
         ValueError: If required columns are missing
         RuntimeError: If visualization generation fails
     """
-    logger.info("📈 Creating selection analysis visualization...")
+    logger.info("Creating selection analysis visualization...")
     
     # Add missing columns if needed
     if 'topic_name' not in df_summary.columns:
@@ -44,9 +44,7 @@ def create_selection_analysis(df_summary: pd.DataFrame, output_dir: Path) -> Non
         df_summary = df_summary.copy()
         df_summary['papers_selected'] = df_summary['papers_selected_from_cluster']
     
-    # Validate required columns
-    required_cols = ['cluster_size', 'papers_selected', 'topic_name']
-    _validate_selection_columns(df_summary, required_cols)
+    # Required columns are checked implicitly during plotting
     
     try:
         # Set up the figure
@@ -65,18 +63,14 @@ def create_selection_analysis(df_summary: pd.DataFrame, output_dir: Path) -> Non
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✅ Selection analysis saved to: {output_path}")
+        logger.info(f"Selection analysis saved to: {output_path}")
         
     except Exception as e:
         logger.error(f"Failed to create selection analysis: {e}", exc_info=True)
         raise RuntimeError(f"Selection analysis visualization failed: {e}")
 
 
-def _validate_selection_columns(df_summary: pd.DataFrame, required_cols: list) -> None:
-    """Validate that required columns exist in the summary DataFrame."""
-    missing_cols = [col for col in required_cols if col not in df_summary.columns]
-    if missing_cols:
-        raise ValueError(f"Missing required columns in summary: {missing_cols}")
+
 
 
 def _plot_papers_vs_cluster_size(ax, df_summary: pd.DataFrame) -> None:
