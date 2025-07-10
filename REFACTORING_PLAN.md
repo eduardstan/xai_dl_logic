@@ -68,6 +68,7 @@ research_analysis/
 │       │   │   ├── metrics.py
 │       │   │   ├── cluster_analysis.py
 │       │   │   ├── selection.py
+│       │   │   ├── topic_processor.py
 │       │   │   ├── research_alignment.py
 │       │   │   └── report.py
 │       │   └── stage_3_visualization/
