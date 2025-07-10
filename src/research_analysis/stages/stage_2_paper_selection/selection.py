@@ -117,6 +117,8 @@ def _iterative_selection(
 ) -> List[int]:
     """
     Uses a multi-start iterative optimization to find the best set of papers.
+    
+    This implementation exactly matches the legacy algorithm for faithful reproduction.
     """
     try:
         centroid = compute_cluster_centroid(cluster_embeddings)
@@ -129,61 +131,65 @@ def _iterative_selection(
         best_selection = []
         best_score = -1
 
-        for i in range(iterations):
-            seed = config.pipeline.reproducibility.random_seed + i
-            np.random.seed(seed)
-
-            if i == 0:
-                # Start with the most central paper
-                valid_centralities = {
-                    idx: similarities_to_centroid[idx] for idx in valid_indices
-                }
-                start_node = max(valid_centralities, key=valid_centralities.get)
-                selected = [start_node]
+        # Try multiple random initializations - exactly like legacy
+        for iteration in range(iterations):
+            if iteration == 0:
+                # First iteration: start with highest centrality from valid papers (like legacy)
+                valid_centralities = [(i, similarities_to_centroid[i]) for i in valid_indices]
+                valid_centralities.sort(key=lambda x: x[1], reverse=True)
+                selected = [valid_centralities[0][0]]
             else:
-                # Start with a random paper
+                # Random initialization for other iterations (like legacy)
+                base_seed = config.pipeline.reproducibility.random_seed
+                np.random.seed(base_seed + iteration)  # Reproducible randomness with config seed
                 selected = [np.random.choice(valid_indices)]
-
-            current_candidates = list(set(valid_indices) - set(selected))
-
-            while len(selected) < n_select and current_candidates:
-                best_candidate = -1
-                max_gain = -1
-
-                for candidate_idx in current_candidates:
-                    # Score is the marginal gain of adding this candidate
-                    temp_selection = selected + [candidate_idx]
-                    score = _evaluate_selection_quality(
-                        cluster_embeddings,
-                        temp_selection,
-                        similarities_to_centroid,
-                        diversity_weight,
+            
+            # Build selection iteratively - exactly like legacy algorithm
+            for _ in range(n_select - 1):
+                remaining = [i for i in valid_indices if i not in selected]
+                if not remaining:
+                    break
+                
+                best_candidate = None
+                best_candidate_score = -1
+                
+                for candidate in remaining:
+                    # Calculate diversity to already selected papers - exactly like legacy
+                    if len(selected) > 0:
+                        similarities_to_selected = compute_pairwise_similarities(
+                            cluster_embeddings[candidate], 
+                            cluster_embeddings[selected]
+                        )
+                        avg_similarity_to_selected = np.mean(similarities_to_selected)
+                        diversity_to_selected = 1.0 - avg_similarity_to_selected
+                    else:
+                        diversity_to_selected = 1.0
+                    
+                    # Combined score using utility function - exactly like legacy
+                    centrality_score = similarities_to_centroid[candidate]
+                    combined_score = compute_representativeness_score(
+                        centrality_score, diversity_to_selected, diversity_weight
                     )
-                    gain = score - _evaluate_selection_quality(
-                        cluster_embeddings,
-                        selected,
-                        similarities_to_centroid,
-                        diversity_weight,
-                    )
-                    if gain > max_gain:
-                        max_gain = gain
-                        best_candidate = candidate_idx
-
-                if best_candidate != -1:
+                    
+                    if combined_score > best_candidate_score:
+                        best_candidate_score = combined_score
+                        best_candidate = candidate
+                
+                if best_candidate is not None:
                     selected.append(best_candidate)
-                    current_candidates.remove(best_candidate)
-                else:
-                    break  # No candidate improves the score
-
-            current_score = _evaluate_selection_quality(
+            
+            # Evaluate this selection - exactly like legacy
+            selection_score = _evaluate_selection_quality(
                 cluster_embeddings, selected, similarities_to_centroid, diversity_weight
             )
+            
+            if selection_score > best_score:
+                best_score = selection_score
+                best_selection = selected.copy()
 
-            if current_score > best_score:
-                best_score = current_score
-                best_selection = selected
-
-        return best_selection
+        return best_selection if best_selection else _greedy_selection(
+            cluster_embeddings, n_select, valid_indices, diversity_scores, config
+        )
 
     except Exception as e:
         logger.error(f"Iterative selection failed: {e}", exc_info=True)
@@ -200,63 +206,69 @@ def _greedy_selection(
     config: AppConfig,
 ) -> List[int]:
     """
-    Selects papers using a greedy algorithm that balances centrality and diversity.
+    Fallback greedy selection with improved scoring.
+    
+    This implementation exactly matches the legacy algorithm for faithful reproduction.
     """
     try:
         centroid = compute_cluster_centroid(cluster_embeddings)
-        similarities_to_centroid = compute_pairwise_similarities(
-            centroid, cluster_embeddings
-        )
-
-        selected_indices = []
-        candidate_indices = valid_indices.copy()
-
-        # First, select the most representative paper among valid candidates
-        initial_scores = {
-            idx: compute_representativeness_score(
-                similarities_to_centroid[idx],
-                diversity_scores[idx],
-                config.stage_2.metrics.diversity_weight,
-            )
-            for idx in candidate_indices
-        }
-        best_initial_idx = max(initial_scores, key=initial_scores.get)
-        selected_indices.append(best_initial_idx)
-        candidate_indices.remove(best_initial_idx)
-
-        # Select the rest of the papers
-        while len(selected_indices) < n_select and candidate_indices:
-            best_candidate_idx = -1
-            max_score = -1
-
-            for idx in candidate_indices:
-                sim_to_selected = compute_pairwise_similarities(
-                    cluster_embeddings[idx], cluster_embeddings[selected_indices]
-                )
-                diversity_from_selected = 1.0 - np.mean(sim_to_selected)
-
-                score = compute_representativeness_score(
-                    similarities_to_centroid[idx],
-                    diversity_from_selected,
-                    config.stage_2.metrics.diversity_weight,
-                )
-
-                if score > max_score:
-                    max_score = score
-                    best_candidate_idx = idx
-
-            if best_candidate_idx != -1:
-                selected_indices.append(best_candidate_idx)
-                candidate_indices.remove(best_candidate_idx)
-            else:
+        similarities_to_centroid = compute_pairwise_similarities(centroid, cluster_embeddings)
+        diversity_weight = config.stage_2.metrics.diversity_weight
+        
+        # Start with the best combination of centrality and individual diversity - exactly like legacy
+        initial_scores = []
+        for idx in valid_indices:
+            centrality = similarities_to_centroid[idx]
+            diversity = diversity_scores[idx]
+            score = compute_representativeness_score(centrality, diversity, diversity_weight)
+            initial_scores.append((idx, score))
+        
+        initial_scores.sort(key=lambda x: x[1], reverse=True)
+        selected_indices = [initial_scores[0][0]]
+        
+        # Greedily add remaining papers - exactly like legacy
+        for _ in range(n_select - 1):
+            remaining_indices = [i for i in valid_indices if i not in selected_indices]
+            
+            if not remaining_indices:
                 break
-
+            
+            best_score = -1
+            best_idx = -1
+            
+            for idx in remaining_indices:
+                # Calculate average similarity to already selected papers - exactly like legacy
+                similarities_to_selected = compute_pairwise_similarities(
+                    cluster_embeddings[idx], 
+                    cluster_embeddings[selected_indices]
+                )
+                
+                avg_similarity = np.mean(similarities_to_selected)
+                diversity_to_selected = 1.0 - avg_similarity
+                
+                # Enhanced scoring using utility functions - exactly like legacy
+                centrality_score = similarities_to_centroid[idx]
+                individual_diversity = diversity_scores[idx]
+                
+                # Combine individual diversity and diversity to selected - exactly like legacy (60%/40%)
+                combined_diversity = 0.6 * diversity_to_selected + 0.4 * individual_diversity
+                combined_score = compute_representativeness_score(
+                    centrality_score, combined_diversity, diversity_weight
+                )
+                
+                if combined_score > best_score:
+                    best_score = combined_score
+                    best_idx = idx
+            
+            if best_idx != -1:
+                selected_indices.append(best_idx)
+        
         return selected_indices
-
+    
     except Exception as e:
-        logger.error(f"Greedy selection failed: {e}", exc_info=True)
-        # Fallback: return top N by centrality if greedy fails
-        return list(np.argsort(similarities_to_centroid)[-n_select:][::-1])
+        logger.error(f"Error in greedy selection: {e}")
+        # Fallback to simple selection
+        return valid_indices[:n_select] if len(valid_indices) >= n_select else valid_indices
 
 
 def assign_non_selected_papers(
