@@ -9,29 +9,11 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import List
-import yaml
 
 from research_analysis.config.models import AppConfig
 from research_analysis.utils.logging import get_logger
 
 logger = get_logger()
-
-
-def save_config_used(config: AppConfig, output_dir: Path) -> None:
-    """
-    Save the configuration used for Stage 2.
-
-    Args:
-        config: The application configuration.
-        output_dir: The directory to save the config in.
-    """
-    output_dir.mkdir(exist_ok=True, parents=True)
-    config_path = output_dir / "stage_2_config_used.yaml"
-    
-    with open(config_path, "w") as f:
-        yaml.dump(config.dict(), f, default_flow_style=False)
-    
-    logger.info(f"Stage 2 configuration saved to: {config_path}")
 
 
 def generate_selection_report(

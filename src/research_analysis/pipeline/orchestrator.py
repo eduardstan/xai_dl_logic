@@ -35,7 +35,10 @@ def run_full_pipeline(config: AppConfig) -> Path:
     logger.info(f"Starting full pipeline execution - Output: {output_dir}")
 
     # Save pipeline-level configuration
-    _save_pipeline_config(config, output_dir)
+    config_path = output_dir / "pipeline_config_used.yaml"
+    with open(config_path, "w") as f:
+        yaml.dump(config.dict(), f, default_flow_style=False)
+    logger.info(f"Pipeline configuration saved to: {config_path}")
 
     # Execute all stages sequentially
     logger.info("=== Stage 1: Topic Modeling ===")
@@ -51,20 +54,4 @@ def run_full_pipeline(config: AppConfig) -> Path:
     run_stage_3(config, stage_2_output, stage_3_output)
 
     logger.info(f"Pipeline completed successfully! Results: {output_dir}")
-    return output_dir
-
-
-def _save_pipeline_config(config: AppConfig, output_dir: Path) -> None:
-    """
-    Save the complete pipeline configuration.
-
-    Args:
-        config: The application configuration.
-        output_dir: The timestamped output directory.
-    """
-    config_path = output_dir / "pipeline_config_used.yaml"
-    
-    with open(config_path, "w") as f:
-        yaml.dump(config.dict(), f, default_flow_style=False)
-    
-    logger.info(f"Pipeline configuration saved to: {config_path}") 
+    return output_dir 

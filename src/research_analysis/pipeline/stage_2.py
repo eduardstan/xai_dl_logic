@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+import yaml
 from bertopic import BERTopic
 
 from research_analysis.config.models import AppConfig
@@ -17,7 +18,6 @@ from research_analysis.stages.stage_2_paper_selection.topic_processor import (
 )
 from research_analysis.stages.stage_2_paper_selection.report import (
     generate_selection_report,
-    save_config_used,
 )
 from research_analysis.utils.logging import get_logger
 from research_analysis.utils.files import load_from_cache
@@ -78,7 +78,10 @@ def run_stage_2(
     selected_df.to_csv(output_dir / "selected_representatives.csv", index=False)
 
     # 4. Save configuration used for this run
-    save_config_used(config, output_dir)
+    config_path = output_dir / "stage_2_config_used.yaml"
+    with open(config_path, "w") as f:
+        yaml.dump(config.dict(), f, default_flow_style=False)
+    logger.info(f"Stage 2 configuration saved to: {config_path}")
 
     # 5. Generate the final report
     generate_selection_report(config, results_df, summary_df, selected_df, output_dir)
