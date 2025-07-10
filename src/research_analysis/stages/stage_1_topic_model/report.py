@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import yaml
 from bertopic import BERTopic
+import pickle
 
 from research_analysis.config.models import AppConfig
 from research_analysis.utils.logging import get_logger
@@ -50,10 +51,17 @@ def save_results(
     model.save(str(model_path))
     logger.info(f"BERTopic model saved to: {model_path}")
 
-    # Save embeddings
-    embeddings_path = output_dir / "embeddings.npy"
-    np.save(embeddings_path, embeddings)
+    # Save embeddings as a pickle file for consistency
+    embeddings_path = output_dir / "embeddings.pkl"
+    with open(embeddings_path, "wb") as f:
+        pickle.dump(embeddings, f)
     logger.info(f"Embeddings saved to: {embeddings_path}")
+
+    # Save topics as a pickle file
+    topics_path = output_dir / "topics.pkl"
+    with open(topics_path, "wb") as f:
+        pickle.dump(topics, f)
+    logger.info(f"Topics saved to: {topics_path}")
 
     # Save configuration used for this run
     config_path = output_dir / "config_used.yaml"
@@ -68,6 +76,11 @@ def save_results(
         df_results["probability"] = probs.max(axis=1)
     else:
         df_results["probability"] = 0.0  # Assign a default value
+
+    # Save the original documents DataFrame separately for Stage 2
+    documents_path = output_dir / "documents.csv"
+    df.to_csv(documents_path, index=False)
+    logger.info(f"Original documents saved to: {documents_path}")
 
     results_path = output_dir / "bibliography_with_topics.csv"
     df_results.to_csv(results_path, index=False)
