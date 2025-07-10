@@ -72,36 +72,60 @@ def process_topics(
 
         for local_idx, global_idx in enumerate(topic_indices):
             doc = documents_df.iloc[global_idx]
+            
+            # Create doc_info matching legacy format exactly
+            doc_info = {
+                'title': doc.get('title', 'Unknown'),
+                'authors': doc.get('author', 'Unknown'),  # Legacy uses 'authors' but source has 'author'
+                'year': doc.get('year', 'Unknown'),
+                'journal': doc.get('journal', 'Unknown'),
+                'doi': doc.get('doi', ''),
+                'abstract': doc.get('abstract', ''),
+                'keywords': doc.get('keywords', '')
+            }
+            
             paper_metrics = metrics.compute_paper_metrics(
                 embeddings[global_idx], topic_embeddings, config
             )
-            alignment = research_alignment.analyze_research_alignment(
-                f"{doc.get('title', '')} {doc.get('abstract', '')}", config
-            )
+            
+            # Fix metrics key to match legacy naming
+            if 'avg_similarity_to_cluster' in paper_metrics:
+                paper_metrics['similarity_to_cluster_papers'] = paper_metrics.pop('avg_similarity_to_cluster')
+            
+            # Get research alignment
+            full_text = f"{doc.get('title', '')} {doc.get('abstract', '')} {doc.get('keywords', '')}"
+            alignment = research_alignment.analyze_research_alignment(full_text, config)
 
             is_selected = local_idx in selected_local_indices
-            rep_info = {}
+            representative_info = {}
+            
+            # Process non-selected papers assignment info to match legacy format
             if not is_selected and local_idx in assignments:
                 assignment = assignments[local_idx]
                 rep_global_idx = topic_indices[assignment["representative_idx"]]
                 rep_doc = documents_df.iloc[rep_global_idx]
-                rep_info = {
-                    "representative_title": rep_doc.get("title"),
-                    "similarity_to_representative": assignment["similarity"],
+                representative_info = {
+                    'representative_title': rep_doc.get("title", 'Unknown'),
+                    'representative_authors': rep_doc.get("author", 'Unknown'),
+                    'similarity_to_representative': assignment["similarity"],
+                    'is_similar_to_representative': assignment.get("is_similar", False)
                 }
 
-            all_results.append(
-                {
-                    "topic_id": topic_id,
-                    "is_selected_representative": is_selected,
-                    "cluster_size": len(topic_documents),
-                    "papers_selected_from_cluster": n_select,
-                    **doc.to_dict(),
-                    **paper_metrics,
-                    **alignment,
-                    **rep_info,
-                }
-            )
+            # Create result structure matching legacy exactly
+            result = {
+                'topic_id': topic_id,
+                'global_index': global_idx,
+                'local_index': local_idx,
+                'is_selected_representative': is_selected,
+                'cluster_size': len(topic_documents),
+                'papers_selected_from_cluster': n_select,
+                **doc_info,
+                **paper_metrics,
+                **alignment,
+                **representative_info,
+            }
+
+            all_results.append(result)
 
     if not all_results:
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()

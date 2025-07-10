@@ -43,9 +43,17 @@ def analyze_research_alignment(text: str, config: AppConfig) -> Dict[str, float]
 
             matches = 0
             for term in terms:
-                pattern = _build_wildcard_pattern(term.lower())
-                if re.search(pattern, text_lower):
-                    matches += 1
+                term_lower = term.lower()
+                
+                # Handle wildcard patterns - exact match with legacy implementation
+                if '*' in term_lower:
+                    pattern = _build_wildcard_pattern(term_lower)
+                    if re.search(pattern, text_lower):
+                        matches += 1
+                else:
+                    # Exact word matching for terms without wildcards
+                    if re.search(r'\b' + re.escape(term_lower) + r'\b', text_lower):
+                        matches += 1
 
             alignment_scores[f"{category}_alignment"] = matches / len(terms) if terms else 0.0
 
