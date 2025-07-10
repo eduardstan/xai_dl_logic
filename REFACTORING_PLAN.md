@@ -35,7 +35,7 @@ research_analysis/
 │   └── merged.bib                 # Source bibliography data
 ├── cache/
 │   ├── parsed_bib.pkl             # Cached data to speed up runs
-│   └── embeddings_all-MiniLM-L6.pkl
+│   └── embeddings_all-MiniLM-L6-v2.pkl
 ├── pyproject.toml                 # Project definition and dependencies
 ├── README.md                      # Updated documentation
 ├── src/
