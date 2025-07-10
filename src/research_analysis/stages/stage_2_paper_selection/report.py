@@ -111,7 +111,7 @@ def _generate_metrics_comparison(
         sel_mean = selected_df[metric].mean()
         sel_std = selected_df[metric].std()
         
-        improvement = (sel_mean - all_mean) / abs(all_mean) if abs(all_mean) > 0 else 0
+        improvement = (sel_mean - all_mean) / all_mean if all_mean != 0 else 0
         
         sections.append(f"### {metric.replace('_', ' ').title()}")
         sections.append(
