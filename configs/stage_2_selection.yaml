@@ -43,6 +43,8 @@ metrics:
   # The weight given to diversity vs. centrality in the representativeness score.
   # 0.0 = 100% centrality, 1.0 = 100% diversity.
   diversity_weight: 0.75
+  # Minimum diversity score for a paper to be considered a candidate for selection.
+  min_diversity_threshold: 0.25
   # Minimum cosine similarity for a paper to be considered part of a cluster's core.
   similarity_threshold: 0.8
   # Use an iterative optimization process for selection instead of a greedy one.
