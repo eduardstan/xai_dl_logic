@@ -57,14 +57,10 @@ def save_results(
         pickle.dump(embeddings, f)
     logger.info(f"Embeddings saved to: {embeddings_path}")
 
-    # Save topics as a pickle file
-    topics_path = output_dir / "topics.pkl"
-    with open(topics_path, "wb") as f:
-        pickle.dump(topics, f)
-    logger.info(f"Topics saved to: {topics_path}")
+
 
     # Save configuration used for this run
-    config_path = output_dir / "config_used.yaml"
+    config_path = output_dir / "stage_1_config_used.yaml"
     with open(config_path, "w") as f:
         yaml.dump(config.dict(), f, default_flow_style=False)
     logger.info(f"Run configuration saved to: {config_path}")
@@ -137,7 +133,7 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     for _, row in top_10.iterrows():
         report += f"- **Topic {row['Topic']}**: {row['Count']} docs - _{row['Name']}_\n"
 
-    report_path = output_dir / "stage_1_summary_report.md"
+    report_path = output_dir / "topic_analysis_report.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
     logger.info(f"Summary report saved to: {report_path}") 

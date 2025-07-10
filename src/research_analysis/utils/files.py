@@ -68,9 +68,9 @@ def save_to_cache(data: Any, cache_path: Path, compress: bool = True) -> None:
     try:
         with open(cache_path, "wb") as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL if compress else 4)
-        logger.info(f"💾 Saved to cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
+        logger.info(f"Saved to cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
     except Exception as e:
-        logger.error(f"❌ Failed to save to cache: {cache_path}: {e}")
+        logger.error(f"Failed to save to cache: {cache_path}: {e}")
         raise
 
 
@@ -91,8 +91,8 @@ def load_from_cache(cache_path: Path) -> Any:
     try:
         with open(cache_path, "rb") as f:
             data = pickle.load(f)
-        logger.info(f"📂 Loaded from cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
+        logger.info(f"Loaded from cache: {cache_path} ({cache_path.stat().st_size / 1e6:.2f} MB)")
         return data
     except Exception as e:
-        logger.error(f"❌ Failed to load from cache: {cache_path}: {e}")
+        logger.error(f"Failed to load from cache: {cache_path}: {e}")
         raise 

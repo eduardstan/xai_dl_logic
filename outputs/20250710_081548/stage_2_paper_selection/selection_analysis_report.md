@@ -1,10 +1,10 @@
 # Paper Selection & Analysis Report
 
-**Generated on:** 2025-07-10 14:52:03
+**Generated on:** 2025-07-10 18:27:15
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 - **Total Papers Analyzed:** 3,735
 - **Representative Papers Selected:** 533
 - **Selection Ratio:** 14.27%
@@ -12,7 +12,7 @@
 
 ---
 
-## 🎯 Selection Configuration
+## Selection Configuration
 - **Selection Strategy:** `diverse_representative`
 - **Count Method:** `ratio_based`
 - **Diversity Weight:** 0.75
@@ -21,7 +21,7 @@
 
 ---
 
-## 📈 Metrics Comparison
+## Metrics Comparison
 
 ### Similarity To Centroid
 
@@ -55,21 +55,21 @@
 
 ---
 
-## 🔍 Research Alignment (Selected Papers)
+## Research Alignment (Selected Papers)
 - **Subsymbolic Alignment:** 15.36%
 - **Symbolic Alignment:** 12.08%
 - **Xai Alignment:** 13.56%
 
 ---
 
-## 📎 Paper Assignment Analysis
+## Paper Assignment Analysis
 - **Non-Selected Papers:** 3,202
 - **Assigned to a Representative:** 3,202 (100.00%)
 - **Average Assignment Similarity:** 0.5640
 
 ---
 
-## 📚 Reading Recommendations
+## Reading Recommendations
 
 ### Priority 1: Highest Representativeness Score
 

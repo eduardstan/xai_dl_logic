@@ -17,6 +17,7 @@ from research_analysis.stages.stage_2_paper_selection.topic_processor import (
 )
 from research_analysis.stages.stage_2_paper_selection.report import (
     generate_selection_report,
+    save_config_used,
 )
 from research_analysis.utils.logging import get_logger
 from research_analysis.utils.files import load_from_cache
@@ -37,7 +38,7 @@ def run_stage_2(
         stage_1_input_dir: The path to the Stage 1 output directory.
         output_dir: The directory to save Stage 2 artifacts.
     """
-    logger.info("🚀 Starting Stage 2: Paper Selection and Analysis")
+    logger.info("Starting Stage 2: Paper Selection and Analysis")
     output_dir.mkdir(exist_ok=True, parents=True)
 
     # 1. Load artifacts from the specified Stage 1 directory
@@ -76,7 +77,10 @@ def run_stage_2(
     summary_df.to_csv(output_dir / "selection_summary.csv", index=False)
     selected_df.to_csv(output_dir / "selected_representatives.csv", index=False)
 
-    # 4. Generate the final report
+    # 4. Save configuration used for this run
+    save_config_used(config, output_dir)
+
+    # 5. Generate the final report
     generate_selection_report(config, results_df, summary_df, selected_df, output_dir)
 
-    logger.info("🎉 Stage 2 completed successfully!") 
+    logger.info("Stage 2 completed successfully!") 

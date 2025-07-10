@@ -265,39 +265,7 @@ def _create_topic_dashboard(
     logger.info(f"Topic dashboard saved to: {output_path}")
 
 
-def create_simple_scatter_plot(df: pd.DataFrame, output_dir: Path, filename: str = "simple_scatter.html") -> None:
-    """
-    Create a simple scatter plot as a fallback option.
-    
-    Args:
-        df: DataFrame with data to plot
-        output_dir: Directory to save the file
-        filename: Name of the output HTML file
-    """
-    if len(df) == 0:
-        logger.warning("Empty DataFrame provided for scatter plot")
-        return
-    
-    try:
-        # Use the first two numeric columns for x and y
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        if len(numeric_cols) < 2:
-            logger.warning("Not enough numeric columns for scatter plot")
-            return
-        
-        fig = px.scatter(
-            df,
-            x=numeric_cols[0],
-            y=numeric_cols[1],
-            title=f"Scatter Plot: {numeric_cols[0]} vs {numeric_cols[1]}"
-        )
-        
-        output_path = output_dir / filename
-        pyo.plot(fig, filename=str(output_path), auto_open=False)
-        logger.info(f"Simple scatter plot saved to: {output_path}")
-        
-    except Exception as e:
-        logger.error(f"Failed to create simple scatter plot: {e}")
+
 
 
  

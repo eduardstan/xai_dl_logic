@@ -9,11 +9,29 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import List
+import yaml
 
 from research_analysis.config.models import AppConfig
 from research_analysis.utils.logging import get_logger
 
 logger = get_logger()
+
+
+def save_config_used(config: AppConfig, output_dir: Path) -> None:
+    """
+    Save the configuration used for Stage 2.
+
+    Args:
+        config: The application configuration.
+        output_dir: The directory to save the config in.
+    """
+    output_dir.mkdir(exist_ok=True, parents=True)
+    config_path = output_dir / "stage_2_config_used.yaml"
+    
+    with open(config_path, "w") as f:
+        yaml.dump(config.dict(), f, default_flow_style=False)
+    
+    logger.info(f"Stage 2 configuration saved to: {config_path}")
 
 
 def generate_selection_report(
@@ -79,7 +97,7 @@ def _generate_executive_summary(
     selection_ratio = total_selected / total_papers if total_papers > 0 else 0
     total_topics = summary_df["topic_id"].nunique()
 
-    return f"""## 📊 Executive Summary
+    return f"""## Executive Summary
 - **Total Papers Analyzed:** {total_papers:,}
 - **Representative Papers Selected:** {total_selected:,}
 - **Selection Ratio:** {selection_ratio:.2%}
@@ -88,7 +106,7 @@ def _generate_executive_summary(
 
 def _generate_selection_config(config: AppConfig) -> str:
     cfg = config.stage_2
-    return f"""## 🎯 Selection Configuration
+    return f"""## Selection Configuration
 - **Selection Strategy:** `{cfg.selection_strategy.method}`
 - **Count Method:** `{cfg.selection_strategy.count_method}`
 - **Diversity Weight:** {cfg.metrics.diversity_weight}
@@ -99,7 +117,7 @@ def _generate_selection_config(config: AppConfig) -> str:
 def _generate_metrics_comparison(
     results_df: pd.DataFrame, selected_df: pd.DataFrame
 ) -> str:
-    sections = ["## 📈 Metrics Comparison"]
+    sections = ["## Metrics Comparison"]
     metrics = ["similarity_to_centroid", "diversity_score", "representativeness_score"]
     
     for metric in metrics:
@@ -130,7 +148,7 @@ def _generate_research_alignment(selected_df: pd.DataFrame) -> str:
     if not alignment_cols:
         return ""
 
-    rows = ["## 🔍 Research Alignment (Selected Papers)"]
+    rows = ["## Research Alignment (Selected Papers)"]
     for col in sorted(alignment_cols):
         avg_score = selected_df[col].mean()
         rows.append(f"- **{col.replace('_', ' ').title()}:** {avg_score:.2%}")
@@ -151,14 +169,14 @@ def _generate_assignment_analysis(results_df: pd.DataFrame) -> str:
     coverage = len(assigned) / len(non_selected) if len(non_selected) > 0 else 0
     avg_sim = assigned["similarity_to_representative"].mean() if len(assigned) > 0 else 0
 
-    return f"""## 📎 Paper Assignment Analysis
+    return f"""## Paper Assignment Analysis
 - **Non-Selected Papers:** {len(non_selected):,}
 - **Assigned to a Representative:** {len(assigned):,} ({coverage:.2%})
 - **Average Assignment Similarity:** {avg_sim:.4f}"""
 
 
 def _generate_reading_recommendations(selected_df: pd.DataFrame) -> str:
-    sections = ["## 📚 Reading Recommendations"]
+    sections = ["## Reading Recommendations"]
 
     # Priority 1: High Representativeness
     sections.append("### Priority 1: Highest Representativeness Score")

@@ -68,34 +68,4 @@ def load_stage_2_artifacts(stage_2_dir: Path) -> Tuple[pd.DataFrame, pd.DataFram
 
 
 
-def get_visualization_summary(
-    df_all: pd.DataFrame,
-    df_summary: pd.DataFrame, 
-    df_selected: pd.DataFrame
-) -> dict:
-    """
-    Generate summary statistics for visualization context.
-    
-    Args:
-        df_all: Comprehensive analysis DataFrame
-        df_summary: Selection summary DataFrame
-        df_selected: Selected representatives DataFrame
-        
-    Returns:
-        Dictionary with summary statistics and metadata
-    """
-    total_papers = len(df_all)
-    selected_papers = len(df_selected)
-    selection_ratio = selected_papers / total_papers if total_papers > 0 else 0
-    
-    return {
-        'total_papers': total_papers,
-        'selected_papers': selected_papers,
-        'selection_ratio': selection_ratio,
-        'total_topics': len(df_summary),
-        'avg_cluster_size': df_summary['cluster_size'].mean(),
-        'avg_selection_per_topic': df_summary['papers_selected_from_cluster'].mean(),
-        'avg_centrality': df_selected['similarity_to_centroid'].mean(),
-        'avg_diversity': df_selected['diversity_score'].mean(),
-        'avg_representativeness': df_selected['representativeness_score'].mean()
-    } 
+ 

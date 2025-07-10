@@ -202,30 +202,4 @@ def _plot_topic_size_categories(ax, df_summary: pd.DataFrame) -> None:
     ax.set_title('Topic Size Categories Distribution')
 
 
-def get_selection_summary(df_summary: pd.DataFrame) -> dict:
-    """
-    Generate summary statistics for selection analysis.
-    
-    Args:
-        df_summary: Topic-level summary DataFrame
-        
-    Returns:
-        Dictionary with selection analysis statistics
-    """
-    if len(df_summary) == 0:
-        return {}
-    
-    total_papers = df_summary['cluster_size'].sum()
-    total_selected = df_summary['papers_selected'].sum()
-    overall_ratio = total_selected / total_papers if total_papers > 0 else 0
-    
-    return {
-        'total_topics': len(df_summary),
-        'total_papers': total_papers,
-        'total_selected': total_selected,
-        'overall_selection_ratio': overall_ratio,
-        'avg_cluster_size': df_summary['cluster_size'].mean(),
-        'min_cluster_size': df_summary['cluster_size'].min(),
-        'max_cluster_size': df_summary['cluster_size'].max(),
-        'avg_papers_per_topic': df_summary['papers_selected'].mean()
-    } 
+ 
