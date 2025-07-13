@@ -94,6 +94,7 @@ def save_results(
     # Generate and save the summary report, passing the corrected topic_info
     _generate_summary_report(
         topic_info=topic_info,
+        df=df,
         num_docs=len(docs),
         topics=list(topics),
         output_dir=output_dir,
@@ -103,6 +104,7 @@ def save_results(
 
 def _generate_summary_report(
     topic_info: pd.DataFrame,
+    df: pd.DataFrame,
     num_docs: int,
     topics: List[int],
     output_dir: Path,
@@ -133,6 +135,52 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     for _, row in top_10.iterrows():
         report += f"- **Topic {row['Topic']}**: {row['Count']} docs - _{row['Name']}_\n"
 
+    # Add missing text fields analysis
+    text_fields = config.stage_1.data_processing.text_fields
+    report += f"\n\n## 4. Text Fields Analysis\n"
+    report += f"- **Configured Text Fields:** {', '.join(text_fields)}\n\n"
+    
+    # Analyze each text field
+    report += "### Missing Text Fields Statistics\n"
+    for field in text_fields:
+        if field in df.columns:
+            missing_count = (df[field].fillna("").str.strip() == "").sum()
+            present_count = num_docs - missing_count
+            missing_percentage = (missing_count / num_docs * 100) if num_docs > 0 else 0
+            report += f"- **{field.title()}**: {present_count:,} present ({100-missing_percentage:.1f}%), {missing_count:,} missing ({missing_percentage:.1f}%)\n"
+        else:
+            report += f"- **{field.title()}**: Column not found in data\n"
+    
+    # Find documents missing any text field
+    documents_missing_fields = []
+    for idx, row in df.iterrows():
+        missing_fields = []
+        for field in text_fields:
+            if field in df.columns and (pd.isna(row[field]) or str(row[field]).strip() == ""):
+                missing_fields.append(field)
+        if missing_fields:
+            # Use ID if available, otherwise use index
+            doc_id = row.get('ID', row.get('id', f"doc_{idx}"))
+            title = row.get('title', 'No title')
+            documents_missing_fields.append({
+                'id': doc_id,
+                'title': title,
+                'missing_fields': missing_fields
+            })
+    
+    report += f"\n### Documents Missing Text Fields\n"
+    report += f"- **Total documents missing at least one text field:** {len(documents_missing_fields):,} ({len(documents_missing_fields)/num_docs*100:.1f}%)\n"
+    
+    if len(documents_missing_fields) > 0:
+        # Show first 20 documents with missing fields
+        report += f"\n#### First 20 Documents with Missing Fields:\n"
+        for i, doc in enumerate(documents_missing_fields[:20]):
+            missing_str = ", ".join(doc['missing_fields'])
+            report += f"{i+1}. **{doc['id']}** - _{doc['title']}_ (Missing: {missing_str})\n"
+        
+        if len(documents_missing_fields) > 20:
+            report += f"\n_... and {len(documents_missing_fields) - 20} more documents with missing fields._\n"
+    
     report_path = output_dir / "topic_analysis_report.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)

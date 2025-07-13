@@ -100,11 +100,20 @@ def _clean_bibliography_data(
         else:
             df[field] = ""
 
-    df["combined_text"] = (
-        (df["title"].fillna("") + " " + df["abstract"].fillna(""))
-        .str.strip()
-        .str.replace(r"\\s+", " ", regex=True)
-    )
+    # Create combined_text using all configured text fields
+    text_parts = []
+    for field in text_fields:
+        if field in df.columns:
+            text_parts.append(df[field].fillna(""))
+    
+    if text_parts:
+        df["combined_text"] = (
+            " ".join(text_parts)
+            if len(text_parts) == 1
+            else text_parts[0].str.cat(text_parts[1:], sep=" ")
+        ).str.strip().str.replace(r"\\s+", " ", regex=True)
+    else:
+        df["combined_text"] = ""
 
     logger.info(f"Cleaned {len(df)} bibliography entries.")
     return df

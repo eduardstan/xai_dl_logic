@@ -6,6 +6,7 @@ This module provides a command-line interface using Typer for running
 the complete pipeline or individual stages.
 """
 
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 import typer
@@ -65,8 +66,11 @@ def run_pipeline(
         if output_dir:
             config.pipeline.paths.outputs = str(output_dir)
         
-        # Setup logging
-        setup_logging(config.pipeline.logging)
+        # Setup logging with log file in timestamped output directory
+        timestamp = datetime.now().strftime(config.pipeline.reproducibility.timestamp_format)
+        log_output_dir = Path(config.pipeline.paths.outputs) / timestamp
+        log_file = log_output_dir / config.pipeline.paths.logs / "app.log"
+        setup_logging(config.pipeline.logging, log_file)
         
         # Run the full pipeline
         result_dir = run_full_pipeline(config)
@@ -135,8 +139,9 @@ def run_stage(
         # Override output directory
         config.pipeline.paths.outputs = str(output_dir.parent)
         
-        # Setup logging
-        setup_logging(config.pipeline.logging)
+        # Setup logging with log file in specified output directory
+        log_file = output_dir / config.pipeline.paths.logs / "app.log"
+        setup_logging(config.pipeline.logging, log_file)
         
         # Run the specified stage
         if stage == 1:

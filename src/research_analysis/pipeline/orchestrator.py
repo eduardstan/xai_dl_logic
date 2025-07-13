@@ -13,7 +13,7 @@ from research_analysis.config.models import AppConfig
 from research_analysis.pipeline.stage_1 import run_stage_1
 from research_analysis.pipeline.stage_2 import run_stage_2
 from research_analysis.pipeline.stage_3 import run_stage_3
-from research_analysis.utils.logging import get_logger
+from research_analysis.utils.logging import get_logger, setup_logging
 
 logger = get_logger()
 
@@ -31,6 +31,10 @@ def run_full_pipeline(config: AppConfig) -> Path:
     timestamp = datetime.now().strftime(config.pipeline.reproducibility.timestamp_format)
     output_dir = Path(config.pipeline.paths.outputs) / timestamp
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Ensure logging is set up with log file in the output directory
+    log_file = output_dir / config.pipeline.paths.logs / "app.log"
+    setup_logging(config.pipeline.logging, log_file)
 
     logger.info(f"Starting full pipeline execution - Output: {output_dir}")
 

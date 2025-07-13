@@ -55,7 +55,6 @@ data_processing:
   text_fields:
     - "abstract"
     - "title"
-    - "keywords"
 
 # Configuration for the outlier reduction phase, which reassigns outlier
 # documents to existing topics based on a series of strategies.
