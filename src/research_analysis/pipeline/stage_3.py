@@ -20,25 +20,24 @@ from research_analysis.utils.logging import get_logger
 logger = get_logger()
 
 
-def run_stage_3(
-    config: AppConfig,
-    stage_2_input_dir: Path,
-    output_dir: Path,
-) -> None:
+def run_stage_3(config: AppConfig, output_dir: Path) -> None:
     """
     Executes the full Stage 3 visualization and reporting pipeline.
 
     Args:
         config: The application configuration.
-        stage_2_input_dir: The path to the Stage 2 output directory.
-        output_dir: The directory to save Stage 3 artifacts.
+        output_dir: The *root* output directory for the entire pipeline run.
         
     Raises:
         FileNotFoundError: If Stage 2 artifacts are missing
         RuntimeError: If any visualization step fails critically
     """
     logger.info("Starting Stage 3: Visualization and Reporting")
-    output_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Construct input and output paths from config
+    stage_2_input_dir = output_dir / config.pipeline.paths.stage_2_path
+    stage_3_output_dir = output_dir / config.pipeline.paths.stage_3_path
+    stage_3_output_dir.mkdir(exist_ok=True, parents=True)
 
     try:
         # 1. Load artifacts from Stage 2
@@ -47,24 +46,24 @@ def run_stage_3(
 
         # 2. Create static visualizations
         logger.info("Creating metrics overview...")
-        create_metrics_overview(df_all, df_selected, output_dir)
+        create_metrics_overview(df_all, df_selected, stage_3_output_dir)
 
         logger.info("Creating selection analysis...")
-        create_selection_analysis(df_summary, output_dir)
+        create_selection_analysis(df_summary, stage_3_output_dir)
 
         logger.info("Creating network visualizations...")
-        create_network_visualizations(df_all, output_dir)
+        create_network_visualizations(df_all, stage_3_output_dir)
 
         # 3. Create interactive visualizations
         logger.info("Creating interactive visualizations...")
-        create_interactive_visualizations(df_all, df_selected, df_summary, output_dir)
+        create_interactive_visualizations(df_all, df_selected, df_summary, stage_3_output_dir)
 
         # 4. Generate comprehensive report
         logger.info("Generating enhanced statistics report...")
-        report_path = generate_enhanced_statistics_report(df_all, df_selected, df_summary, output_dir)
+        report_path = generate_enhanced_statistics_report(df_all, df_selected, df_summary, stage_3_output_dir)
 
         # 5. Log completion summary
-        _log_completion_summary(df_all, df_selected, df_summary, output_dir)
+        _log_completion_summary(df_all, df_selected, df_summary, stage_3_output_dir)
 
         logger.info("Stage 3 completed successfully!")
 

@@ -18,6 +18,10 @@ paths:
   logs: "logs"
   # Path to the root-level directory for cached data (e.g., parsed .bib, embeddings).
   cache: "cache"
+  # Stage-specific subdirectory names within each timestamped run
+  stage_1_path: "stage_1_topic_model"
+  stage_2_path: "stage_2_paper_selection"
+  stage_3_path: "stage_3_visualization"
 
 # Logging Configuration
 logging:

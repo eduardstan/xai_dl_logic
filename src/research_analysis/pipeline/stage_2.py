@@ -25,21 +25,20 @@ from research_analysis.utils.files import load_from_cache
 logger = get_logger()
 
 
-def run_stage_2(
-    config: AppConfig,
-    stage_1_input_dir: Path,
-    output_dir: Path,
-) -> None:
+def run_stage_2(config: AppConfig, output_dir: Path) -> None:
     """
     Executes the full Stage 2 paper selection and analysis pipeline.
 
     Args:
         config: The application configuration.
-        stage_1_input_dir: The path to the Stage 1 output directory.
-        output_dir: The directory to save Stage 2 artifacts.
+        output_dir: The *root* output directory for the entire pipeline run.
     """
     logger.info("Starting Stage 2: Paper Selection and Analysis")
-    output_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Construct input and output paths from config
+    stage_1_input_dir = output_dir / config.pipeline.paths.stage_1_path
+    stage_2_output_dir = output_dir / config.pipeline.paths.stage_2_path
+    stage_2_output_dir.mkdir(exist_ok=True, parents=True)
 
     # 1. Load artifacts from the specified Stage 1 directory
     logger.info(f"Loading artifacts from {stage_1_input_dir}...")
@@ -72,18 +71,18 @@ def run_stage_2(
     )
 
     # 3. Save the core results
-    logger.info(f"Saving analysis dataframes to {output_dir}...")
-    results_df.to_csv(output_dir / "comprehensive_analysis.csv", index=False)
-    summary_df.to_csv(output_dir / "selection_summary.csv", index=False)
-    selected_df.to_csv(output_dir / "selected_representatives.csv", index=False)
+    logger.info(f"Saving analysis dataframes to {stage_2_output_dir}...")
+    results_df.to_csv(stage_2_output_dir / "comprehensive_analysis.csv", index=False)
+    summary_df.to_csv(stage_2_output_dir / "selection_summary.csv", index=False)
+    selected_df.to_csv(stage_2_output_dir / "selected_representatives.csv", index=False)
 
     # 4. Save configuration used for this run
-    config_path = output_dir / "stage_2_config_used.yaml"
+    config_path = stage_2_output_dir / "stage_2_config_used.yaml"
     with open(config_path, "w") as f:
         yaml.dump(config.dict(), f, default_flow_style=False)
     logger.info(f"Stage 2 configuration saved to: {config_path}")
 
     # 5. Generate the final report
-    generate_selection_report(config, results_df, summary_df, selected_df, output_dir)
+    generate_selection_report(config, results_df, summary_df, selected_df, stage_2_output_dir)
 
     logger.info("Stage 2 completed successfully!") 

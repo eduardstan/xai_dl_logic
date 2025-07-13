@@ -18,6 +18,9 @@ class PathsConfig(BaseModel):
     outputs: str = "outputs"
     logs: str = "logs"
     cache: str = "cache"
+    stage_1_path: str = "stage_1_topic_model"
+    stage_2_path: str = "stage_2_paper_selection"
+    stage_3_path: str = "stage_3_visualization"
 
 class LoggingConfig(BaseModel):
     level: str = "INFO"

@@ -31,7 +31,7 @@ def run_stage_1(config: AppConfig, output_dir: Path) -> None:
     logger.info("--- Starting Stage 1: Topic Modeling ---")
     
     # Create a dedicated subdirectory for this stage's artifacts
-    stage_output_dir = output_dir / "stage_1_topic_model"
+    stage_output_dir = output_dir / config.pipeline.paths.stage_1_path
     stage_output_dir.mkdir(exist_ok=True, parents=True)
 
     # 1. Parse bibliography data

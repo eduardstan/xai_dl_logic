@@ -8,6 +8,9 @@ pipeline:
     cache: cache
     logs: logs
     outputs: outputs
+    stage_1_path: stage_1_topic_model
+    stage_2_path: stage_2_paper_selection
+    stage_3_path: stage_3_visualization
   reproducibility:
     random_seed: 42
     timestamp_format: '%Y%m%d_%H%M%S'

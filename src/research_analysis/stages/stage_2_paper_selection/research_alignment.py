@@ -72,7 +72,7 @@ def _build_wildcard_pattern(term: str) -> str:
     Builds a regex pattern for wildcard matching with word boundaries.
 
     Args:
-        term: The lowercase term, which may contain a wildcard (*).
+        term: The lowercase term, which may contain wildcards (*).
 
     Returns:
         A regex pattern string.
