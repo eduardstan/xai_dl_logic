@@ -157,7 +157,7 @@ def _plot_research_alignment(ax, df_all: pd.DataFrame, df_selected: pd.DataFrame
         ax.set_title('Research Focus Alignment Comparison')
         ax.set_xticks(x)
         ax.set_xticklabels(categories, fontweight='bold')
-        ax.legend(loc='upper right', framealpha=0.9)
+        ax.legend(loc='lower right', framealpha=0.9)
         ax.set_ylim(0, max(max(all_means), max(selected_means)) * 1.2)
         ax.grid(axis='y', alpha=0.3)
     else:

@@ -7,6 +7,9 @@ the visualization generation, interactive dashboards, and reporting workflow.
 """
 
 from pathlib import Path
+from typing import Dict, Any
+import numpy as np
+import yaml
 
 from research_analysis.config.models import AppConfig
 from research_analysis.stages.stage_3_visualization.data_loader import load_stage_2_artifacts
@@ -15,6 +18,8 @@ from research_analysis.stages.stage_3_visualization.selection_plots import creat
 from research_analysis.stages.stage_3_visualization.dashboards import create_interactive_visualizations
 from research_analysis.stages.stage_3_visualization.network import create_network_visualizations
 from research_analysis.stages.stage_3_visualization.report import generate_enhanced_statistics_report
+from research_analysis.stages.stage_3_visualization.statistical_analysis import comprehensive_statistical_analysis
+from research_analysis.stages.stage_3_visualization.statistical_plots import create_all_statistical_plots
 from research_analysis.utils.logging import get_logger
 
 logger = get_logger()
@@ -58,12 +63,59 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
         logger.info("Creating interactive visualizations...")
         create_interactive_visualizations(df_all, df_selected, df_summary, stage_3_output_dir)
 
-        # 4. Generate comprehensive report
-        logger.info("Generating enhanced statistics report...")
-        report_path = generate_enhanced_statistics_report(df_all, df_selected, df_summary, stage_3_output_dir)
+        # 4. Perform statistical analysis (if enabled)
+        statistical_results = None
+        statistical_plots = {}
+        
+        if config.stage_3.statistical_analysis.enabled:
+            logger.info("Performing comprehensive statistical analysis...")
+            
+            # Split data for statistical comparison
+            selected_df = df_all[df_all['is_selected_representative'] == True]
+            non_selected_df = df_all[df_all['is_selected_representative'] == False]
+            
+            # Get variables to analyze
+            variables = (config.stage_3.statistical_analysis.primary_metrics + 
+                        config.stage_3.statistical_analysis.research_alignment)
+            
+            # Perform statistical analysis
+            statistical_results = comprehensive_statistical_analysis(
+                selected_df=selected_df,
+                non_selected_df=non_selected_df,
+                variables=variables,
+                config=config.stage_3
+            )
+            
+            # Create statistical plots
+            if any(config.stage_3.visualizations.dict().values()):
+                logger.info("Creating statistical visualizations...")
+                statistical_plots = create_all_statistical_plots(
+                    statistical_results=statistical_results,
+                    selected_df=selected_df,
+                    non_selected_df=non_selected_df,
+                    variables=variables,
+                    output_dir=stage_3_output_dir,
+                    config=config.stage_3
+                )
+            
+            # Save statistical results
+            if config.stage_3.output.save_statistical_results:
+                _save_statistical_results(statistical_results, stage_3_output_dir)
 
-        # 5. Log completion summary
-        _log_completion_summary(df_all, df_selected, df_summary, stage_3_output_dir)
+        # Save configuration used for this stage
+        config_path = stage_3_output_dir / "stage_3_config_used.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config.dict(), f, default_flow_style=False)
+        logger.info(f"Stage 3 configuration saved to: {config_path}")
+
+        # 5. Generate comprehensive report
+        logger.info("Generating enhanced statistics report...")
+        generate_enhanced_statistics_report(
+            df_all, df_selected, df_summary, stage_3_output_dir
+        )
+
+        # 6. Log completion summary
+        _log_completion_summary(df_all, df_selected, df_summary, stage_3_output_dir, statistical_plots)
 
         logger.info("Stage 3 completed successfully!")
 
@@ -72,7 +124,40 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
         raise RuntimeError(f"Stage 3 visualization pipeline failed: {e}")
 
 
-def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path) -> None:
+def _save_statistical_results(statistical_results: Dict[str, Any], output_dir: Path) -> None:
+    """Save statistical analysis results to JSON file."""
+    import json
+    
+    # Convert numpy types to native Python types for JSON serialization
+    def convert_to_serializable(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, (np.bool_, bool)):
+            return bool(obj)
+        elif isinstance(obj, dict):
+            return {str(key) if isinstance(key, tuple) else key: convert_to_serializable(value) 
+                   for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_to_serializable(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return [convert_to_serializable(item) for item in obj]
+        else:
+            return obj
+    
+    serializable_results = convert_to_serializable(statistical_results)
+    
+    results_path = output_dir / "statistical_analysis_results.json"
+    with open(results_path, 'w') as f:
+        json.dump(serializable_results, f, indent=2)
+    
+    logger.info(f"Statistical results saved to: {results_path}")
+
+
+def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path, statistical_plots: Dict[str, Path] = None) -> None:
     """Log a summary of completed Stage 3 operations."""
     logger.info("Enhanced visualizations completed!")
     logger.info(f"All outputs saved to: {output_dir.absolute()}")
@@ -83,6 +168,15 @@ def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path) -
     logger.info("  - interactive_papers_explorer.html")
     logger.info("  - topic_dashboard.html")
     logger.info("  - enhanced_analysis_report.md")
+    
+    # Log statistical plots if they were created
+    if statistical_plots:
+        logger.info("  Statistical Analysis Files:")
+        for plot_name, plot_path in statistical_plots.items():
+            if plot_path:
+                logger.info(f"    - {plot_path.name}")
+        logger.info("    - statistical_analysis_results.json")
+    logger.info("  - stage_3_config_used.yaml")
 
     # Statistics for the user
     total_papers = len(df_all)
@@ -105,6 +199,15 @@ def _log_completion_summary(df_all, df_selected, df_summary, output_dir: Path) -
     print("  - interactive_papers_explorer.html")
     print("  - topic_dashboard.html")
     print("  - enhanced_analysis_report.md")
+    
+    # Print statistical files if they were created
+    if statistical_plots:
+        print("  Statistical Analysis Files:")
+        for plot_name, plot_path in statistical_plots.items():
+            if plot_path:
+                print(f"    - {plot_path.name}")
+        print("    - statistical_analysis_results.json")
+    print("  - stage_3_config_used.yaml")
     print(f"\nAnalyzed {total_papers:,} papers across {total_topics} topics")
     print(f"Selected {selected_papers:,} representatives ({selected_papers/total_papers:.2%} ratio)")
 

@@ -100,11 +100,23 @@ def _clean_bibliography_data(
         else:
             df[field] = ""
 
-    # Create combined_text using all configured text fields
+    # Create combined_text using all configured text fields with title padding
     text_parts = []
+    title_series = df.get('title', pd.Series([''] * len(df))).fillna("")
+    
     for field in text_fields:
-        if field in df.columns:
+        if field in df.columns and field == 'title':
+            # Use title as-is
             text_parts.append(df[field].fillna(""))
+        elif field in df.columns:
+            # For non-title fields, use title as fallback for missing/empty values
+            field_series = df[field].fillna("")
+            # Create a mask for empty fields and fill with title
+            padded_series = field_series.where(field_series.str.strip() != "", title_series)
+            text_parts.append(padded_series)
+        else:
+            # Field doesn't exist, use title as fallback
+            text_parts.append(title_series)
     
     if text_parts:
         df["combined_text"] = (

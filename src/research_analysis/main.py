@@ -60,6 +60,7 @@ def run_pipeline(
             pipeline_config_path=config_dir / "pipeline.yaml",
             stage_1_config_path=config_dir / "stage_1_topic_model.yaml",
             stage_2_config_path=config_dir / "stage_2_selection.yaml",
+            stage_3_config_path=config_dir / "stage_3_visualization.yaml",
         )
         
         # Override output directory if specified
@@ -134,6 +135,7 @@ def run_stage(
             pipeline_config_path=config_dir / "pipeline.yaml",
             stage_1_config_path=config_dir / "stage_1_topic_model.yaml",
             stage_2_config_path=config_dir / "stage_2_selection.yaml",
+            stage_3_config_path=config_dir / "stage_3_visualization.yaml",
         )
         
         # Override output directory
@@ -193,7 +195,8 @@ def validate_config(
         required_files = [
             "pipeline.yaml",
             "stage_1_topic_model.yaml", 
-            "stage_2_selection.yaml"
+            "stage_2_selection.yaml",
+            "stage_3_visualization.yaml"
         ]
         
         for filename in required_files:
@@ -208,6 +211,7 @@ def validate_config(
             pipeline_config_path=config_dir / "pipeline.yaml",
             stage_1_config_path=config_dir / "stage_1_topic_model.yaml",
             stage_2_config_path=config_dir / "stage_2_selection.yaml",
+            stage_3_config_path=config_dir / "stage_3_visualization.yaml",
         )
         
         typer.echo("✅ All configuration files are valid!")

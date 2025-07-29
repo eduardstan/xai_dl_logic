@@ -1,0 +1,56 @@
+#
+# Stage 3: Visualization and Statistical Analysis Configuration
+#
+
+# Statistical analysis settings
+statistical_analysis:
+  enabled: true
+  
+  # Variables to analyze
+  primary_metrics:
+    - "similarity_to_centroid"
+    - "diversity_score"
+    - "representativeness_score"
+  
+  research_alignment:
+    - "xai_alignment"
+    - "symbolic_alignment"
+    - "subsymbolic_alignment"
+  
+  # Statistical tests
+  tests:
+    mann_whitney_u:
+      enabled: true
+      alpha: 0.05
+      alternative: "two-sided"
+    
+    cohens_d:
+      enabled: true
+      confidence_level: 0.95
+      effect_size_thresholds:
+        small: 0.2
+        medium: 0.5
+        large: 0.8
+    
+    temporal_analysis:
+      enabled: true
+      test: "kolmogorov_smirnov"
+      alpha: 0.05
+  
+  # Multiple testing correction
+  multiple_testing_correction:
+    method: "fdr_bh"  # Benjamini-Hochberg
+    alpha: 0.05
+
+# Visualization settings
+visualizations:
+  create_statistical_plots: true
+  create_effect_size_plots: true
+  create_temporal_plots: true
+  plot_format: "png"
+  plot_dpi: 300
+
+# Output settings
+output:
+  save_statistical_results: true
+  include_in_report: true 

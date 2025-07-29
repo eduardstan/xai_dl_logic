@@ -52,8 +52,8 @@ def create_network_visualizations(df_all: pd.DataFrame, output_dir: Path) -> Non
 
 def _create_paper_assignment_network(df_all: pd.DataFrame, output_dir: Path) -> None:
     """Create network visualization showing representatives and their assigned papers."""
-    # Get top 5 topics by paper count
-    topic_counts = df_all['topic_id'].value_counts().head(5)
+    # Get top 10 topics by paper count
+    topic_counts = df_all['topic_id'].value_counts().head(10)
     top_topics = topic_counts.index.tolist()
     
     if len(top_topics) == 0:

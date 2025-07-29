@@ -9,12 +9,13 @@ merged, and strongly-typed configuration object for the application.
 
 from pathlib import Path
 import yaml
-from .models import AppConfig, PipelineConfig, Stage1Config, Stage2Config
+from .models import AppConfig, PipelineConfig, Stage1Config, Stage2Config, Stage3Config
 
 def load_config(
     pipeline_config_path: str = "configs/pipeline.yaml",
     stage_1_config_path: str = "configs/stage_1_topic_model.yaml",
     stage_2_config_path: str = "configs/stage_2_selection.yaml",
+    stage_3_config_path: str = "configs/stage_3_visualization.yaml",
 ) -> AppConfig:
     """
     Loads all configuration files and merges them into a single AppConfig object.
@@ -23,6 +24,7 @@ def load_config(
         pipeline_config_path: Path to the main pipeline configuration file.
         stage_1_config_path: Path to the Stage 1 (topic modeling) config file.
         stage_2_config_path: Path to the Stage 2 (selection) config file.
+        stage_3_config_path: Path to the Stage 3 (visualization) config file.
 
     Returns:
         An instance of AppConfig containing the validated and merged settings.
@@ -31,17 +33,20 @@ def load_config(
     raw_pipeline = _load_yaml(pipeline_config_path)
     raw_stage_1 = _load_yaml(stage_1_config_path)
     raw_stage_2 = _load_yaml(stage_2_config_path)
+    raw_stage_3 = _load_yaml(stage_3_config_path)
 
     # Validate and structure each configuration part
     pipeline_conf = PipelineConfig(**raw_pipeline)
     stage_1_conf = Stage1Config(**raw_stage_1)
     stage_2_conf = Stage2Config(**raw_stage_2)
+    stage_3_conf = Stage3Config(**raw_stage_3)
 
     # Combine into the final AppConfig object
     app_config = AppConfig(
         pipeline=pipeline_conf,
         stage_1=stage_1_conf,
         stage_2=stage_2_conf,
+        stage_3=stage_3_conf,
     )
 
     return app_config

@@ -61,7 +61,7 @@ def compute_pairwise_similarities(
         paper_embedding.reshape(1, -1), cluster_embeddings
     )
     # Return raw similarities without clipping to match legacy behavior exactly
-    return similarities.flatten()
+    return np.clip(similarities.flatten(), -1.0, 1.0)
 
 
 def compute_diversity_score(

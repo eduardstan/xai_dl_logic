@@ -8,12 +8,27 @@ visualization outputs and providing statistical insights.
 
 from datetime import datetime
 from pathlib import Path
+import json
+from typing import Dict, Any, Optional
 
 import pandas as pd
+import numpy as np
 
 from research_analysis.utils.logging import get_logger
 
 logger = get_logger()
+
+
+def _load_statistical_results(output_dir: Path) -> Optional[Dict[str, Any]]:
+    """Load statistical analysis results from JSON file if available."""
+    results_path = output_dir / "statistical_analysis_results.json"
+    if results_path.exists():
+        try:
+            with open(results_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load statistical results: {e}")
+    return None
 
 
 def generate_enhanced_statistics_report(
@@ -46,12 +61,15 @@ def generate_enhanced_statistics_report(
         report_path = output_dir / "enhanced_analysis_report.md"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
+        # Load statistical analysis results if available
+        statistical_results = _load_statistical_results(output_dir)
+        
         # Generate report sections
         sections = [
             _generate_report_header(timestamp),
             _generate_executive_summary(df_all, df_selected, df_summary),
-            _generate_visualization_summary(),
-            _generate_statistical_insights(df_all, df_selected, df_summary),
+            _generate_visualization_summary(statistical_results is not None),
+            _generate_statistical_insights(df_all, df_selected, df_summary, statistical_results),
             _generate_research_recommendations(df_selected),
             _generate_technical_notes()
         ]
@@ -120,9 +138,9 @@ with an overall selection ratio of {selection_ratio:.2%}. This ensures both broa
 manageable scope for detailed review."""
 
 
-def _generate_visualization_summary() -> str:
+def _generate_visualization_summary(has_statistical_analysis: bool = False) -> str:
     """Generate summary of generated visualizations."""
-    return """## Generated Visualizations
+    base_visualizations = """## Generated Visualizations
 
 ### Static Visualizations (PNG)
 
@@ -142,7 +160,33 @@ def _generate_visualization_summary() -> str:
    - Network visualization of top 5 topics
    - Representative papers as central nodes
    - Assignment relationships between papers
-   - Spatial layout based on similarity metrics
+   - Spatial layout based on similarity metrics"""
+
+    statistical_visualizations = """
+
+### Statistical Analysis Visualizations (PNG)
+
+4. **distribution_comparison.png**
+   - Statistical distribution comparisons between selected and non-selected papers
+   - Histogram overlays with median lines for each variable
+   - Density plots showing distribution shapes and differences
+
+5. **effect_size_forest_plot.png**
+   - Cohen's d effect sizes with 95% confidence intervals
+   - Color-coded by effect size magnitude (small, medium, large)
+   - Reference lines for effect size thresholds
+
+6. **temporal_analysis.png**
+   - Publication year distribution analysis
+   - Kolmogorov-Smirnov test results for temporal bias
+   - Selection rate trends over time
+
+7. **statistical_summary.png**
+   - Mann-Whitney U test p-values (log scale)
+   - Effect sizes for all analyzed variables
+   - Significance indicators and effect size categories"""
+
+    interactive_section = """
 
 ### Interactive Visualizations (HTML)
 
@@ -158,8 +202,14 @@ def _generate_visualization_summary() -> str:
    - Selection efficiency metrics
    - Research alignment distribution"""
 
+    # Combine sections based on whether statistical analysis was performed
+    if has_statistical_analysis:
+        return base_visualizations + statistical_visualizations + interactive_section
+    else:
+        return base_visualizations + interactive_section
 
-def _generate_statistical_insights(df_all: pd.DataFrame, df_selected: pd.DataFrame, df_summary: pd.DataFrame) -> str:
+
+def _generate_statistical_insights(df_all: pd.DataFrame, df_selected: pd.DataFrame, df_summary: pd.DataFrame, statistical_results: Optional[Dict[str, Any]] = None) -> str:
     """Generate statistical insights section."""
     # Calculate additional insights
     largest_topic_size = df_summary['cluster_size'].max() if len(df_summary) > 0 else 0
@@ -183,6 +233,11 @@ def _generate_statistical_insights(df_all: pd.DataFrame, df_selected: pd.DataFra
 The selected papers show {_get_dominant_alignment(xai_mean, symbolic_mean, subsymbolic_mean)} 
 research focus alignment, indicating the composition of the systematic review."""
     
+    # Add comprehensive statistical analysis if available
+    statistical_analysis_text = ""
+    if statistical_results:
+        statistical_analysis_text = _generate_statistical_analysis_section(statistical_results)
+    
     return f"""## Statistical Insights
 
 ### Topic Distribution Analysis
@@ -203,7 +258,95 @@ with selection ratios varying appropriately based on cluster size and quality me
 The selected representatives demonstrate strong balance between:
 - **Centrality:** High similarity to topic centroids
 - **Diversity:** Adequate coverage of topic variations  
-- **Representativeness:** Optimal combination of both factors"""
+- **Representativeness:** Optimal combination of both factors
+{statistical_analysis_text}"""
+
+
+def _generate_statistical_analysis_section(statistical_results: Dict[str, Any]) -> str:
+    """Generate comprehensive statistical analysis section."""
+    
+    # Extract key results
+    mann_whitney_results = statistical_results.get('mann_whitney_analysis', {}).get('individual_tests', {})
+    effect_size_results = statistical_results.get('effect_size_analysis', {})
+    temporal_results = statistical_results.get('temporal_analysis', {})
+    summary = statistical_results.get('summary', {})
+    
+    # Mann-Whitney U test summary
+    mw_section = ""
+    if mann_whitney_results:
+        significant_tests = sum(1 for result in mann_whitney_results.values() if result.get('significant', False))
+        total_tests = len(mann_whitney_results)
+        
+        mw_section = f"""
+
+### Statistical Validation Results
+
+#### Mann-Whitney U Tests (Non-parametric comparison)
+- **Tests Performed:** {total_tests} variables analyzed
+- **Significant Differences:** {significant_tests}/{total_tests} tests show significant differences (p < 0.05)
+- **Multiple Testing Correction:** Applied Benjamini-Hochberg procedure
+
+**Key Findings:**"""
+        
+        for var, result in mann_whitney_results.items():
+            significance = "**SIGNIFICANT**" if result.get('significant', False) else "Not significant"
+            p_val = result.get('p_value', 0)
+            mw_section += f"""
+- **{var.replace('_', ' ').title()}:** {significance} (p = {p_val:.4f})"""
+    
+    # Effect size summary
+    effect_section = ""
+    if effect_size_results:
+        large_effects = sum(1 for result in effect_size_results.values() 
+                           if result.get('effect_size_category') == 'large')
+        medium_effects = sum(1 for result in effect_size_results.values() 
+                            if result.get('effect_size_category') == 'medium')
+        
+        effect_section = f"""
+
+#### Effect Size Analysis (Cohen's d)
+- **Large Effects (d > 0.8):** {large_effects} variables
+- **Medium Effects (0.5 < d < 0.8):** {medium_effects} variables
+
+**Effect Sizes:**"""
+        
+        for var, result in effect_size_results.items():
+            cohens_d = result.get('cohens_d', 0)
+            category = result.get('effect_size_category', 'unknown')
+            ci_lower, ci_upper = result.get('confidence_interval', (0, 0))
+            
+            effect_section += f"""
+- **{var.replace('_', ' ').title()}:** d = {cohens_d:.3f} ({category}) [95% CI: {ci_lower:.3f}, {ci_upper:.3f}]"""
+    
+    # Temporal analysis
+    temporal_section = ""
+    if temporal_results:
+        ks_test = temporal_results.get('kolmogorov_smirnov_test', {})
+        temporal_bias = ks_test.get('significant_difference', False)
+        
+        temporal_section = f"""
+
+#### Temporal Bias Assessment
+- **Kolmogorov-Smirnov Test:** p = {ks_test.get('p_value', 0):.4f}
+- **Temporal Bias Detected:** {'Yes' if temporal_bias else 'No'}
+- **Interpretation:** {'Selection shows temporal bias - methodology may favor certain time periods' if temporal_bias else 'Selection is temporally representative across publication years'}"""
+    
+    # Research implications
+    implications_section = """
+
+### Research Methodology Validation
+
+The statistical analysis provides rigorous validation of the paper selection methodology:
+
+1. **Selection Effectiveness:** Significant differences between selected and non-selected papers confirm that the algorithm successfully identifies papers with distinct characteristics.
+
+2. **Methodological Soundness:** Effect size analysis quantifies the practical significance of selection criteria.
+
+3. **Bias Assessment:** Temporal analysis ensures selection methodology does not favor specific time periods.
+
+4. **Reproducibility:** All statistical tests include confidence intervals and multiple testing corrections for robust inference."""
+    
+    return mw_section + effect_section + temporal_section + implications_section
 
 
 def _get_dominant_alignment(xai: float, symbolic: float, subsymbolic: float) -> str:

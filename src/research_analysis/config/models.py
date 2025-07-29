@@ -166,10 +166,65 @@ class Stage2Config(BaseModel):
     research_alignment: ResearchAlignmentConfig
 
 
+# --- Models for stage_3_visualization.yaml ---
+
+class MannWhitneyUConfig(BaseModel):
+    enabled: bool = True
+    alpha: float = 0.05
+    alternative: str = "two-sided"
+
+class CohensDConfig(BaseModel):
+    enabled: bool = True
+    confidence_level: float = 0.95
+    effect_size_thresholds: Dict[str, float] = {
+        "small": 0.2,
+        "medium": 0.5,
+        "large": 0.8
+    }
+
+class TemporalAnalysisConfig(BaseModel):
+    enabled: bool = True
+    test: str = "kolmogorov_smirnov"
+    alpha: float = 0.05
+
+class StatisticalTestsConfig(BaseModel):
+    mann_whitney_u: MannWhitneyUConfig = Field(default_factory=MannWhitneyUConfig)
+    cohens_d: CohensDConfig = Field(default_factory=CohensDConfig)
+    temporal_analysis: TemporalAnalysisConfig = Field(default_factory=TemporalAnalysisConfig)
+
+class MultipleTestingCorrectionConfig(BaseModel):
+    method: str = "fdr_bh"
+    alpha: float = 0.05
+
+class StatisticalAnalysisConfig(BaseModel):
+    enabled: bool = True
+    primary_metrics: List[str] = ["similarity_to_centroid", "diversity_score", "representativeness_score"]
+    research_alignment: List[str] = ["xai_alignment", "symbolic_alignment", "subsymbolic_alignment"]
+    tests: StatisticalTestsConfig = Field(default_factory=StatisticalTestsConfig)
+    multiple_testing_correction: MultipleTestingCorrectionConfig = Field(default_factory=MultipleTestingCorrectionConfig)
+
+class VisualizationsConfig(BaseModel):
+    create_statistical_plots: bool = True
+    create_effect_size_plots: bool = True
+    create_temporal_plots: bool = True
+    plot_format: str = "png"
+    plot_dpi: int = 300
+
+class Stage3OutputConfig(BaseModel):
+    save_statistical_results: bool = True
+    include_in_report: bool = True
+
+class Stage3Config(BaseModel):
+    statistical_analysis: StatisticalAnalysisConfig = Field(default_factory=StatisticalAnalysisConfig)
+    visualizations: VisualizationsConfig = Field(default_factory=VisualizationsConfig)
+    output: Stage3OutputConfig = Field(default_factory=Stage3OutputConfig)
+
+
 # --- Top-level Application Configuration Model ---
 
 class AppConfig(BaseModel):
     """The complete, validated, and merged configuration for the application."""
     pipeline: PipelineConfig
     stage_1: Stage1Config
-    stage_2: Stage2Config 
+    stage_2: Stage2Config
+    stage_3: Stage3Config 
