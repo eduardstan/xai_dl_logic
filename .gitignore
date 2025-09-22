@@ -47,7 +47,6 @@ ipython_config.py
 .conda/
 
 # Cache directories
-cache/
 __pycache__/
 .cache/
 
@@ -84,5 +83,6 @@ results/*.png
 results/*.html
 bertopic_analysis/plots/*.html
 bertopic_analysis/results/
-bertopic_analysis/models/ \n# Global cache for expensive operations
-cache/
+bertopic_analysis/models/
+
+# Global cache for expensive operations (duplicates above, kept for clarity)

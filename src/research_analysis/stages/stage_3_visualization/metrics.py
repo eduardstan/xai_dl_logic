@@ -45,7 +45,7 @@ def create_metrics_overview(
     try:
         # Set up the figure
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-        fig.suptitle('Advanced Systematic Review: Metrics Overview', fontsize=16, fontweight='bold')
+        # fig.suptitle('Advanced Systematic Review: Metrics Overview', fontsize=16, fontweight='bold')
         
         # Create individual visualizations
         _plot_centrality_distribution(axes[0, 0], df_all, df_selected)

@@ -301,9 +301,9 @@ If you use this framework in your research, please cite:
 ```bibtex
 @software{research_analysis_framework,
   title = {Research Analysis Framework: A Unified System for Bibliography Analysis},
-  author = {Your Name},
+  author = {Eduard Stan},
   year = {2025},
-  url = {https://github.com/your-repo/research_analysis}
+  url = {https://github.com/eduard-stan/xai_dl_logic}
 }
 ```
 

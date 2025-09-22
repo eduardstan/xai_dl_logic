@@ -327,7 +327,7 @@ def create_statistical_summary_plot(
     logger.info("Creating statistical summary plot...")
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-    fig.suptitle('Statistical Analysis Summary', fontsize=16, fontweight='bold')
+    # fig.suptitle('Statistical Analysis Summary', fontsize=16, fontweight='bold')
     
     # Plot 1: P-values from Mann-Whitney tests
     variables = list(mann_whitney_results.keys())

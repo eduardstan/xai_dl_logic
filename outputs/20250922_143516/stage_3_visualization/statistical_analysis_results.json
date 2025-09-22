@@ -1,0 +1,291 @@
+{
+  "mann_whitney_analysis": {
+    "individual_tests": {
+      "similarity_to_centroid": {
+        "variable": "similarity_to_centroid",
+        "u_statistic": 867163.0,
+        "p_value": 0.748977971865366,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": 0.008628139739108587,
+        "significant": false,
+        "selected_median": 0.6972194910049438,
+        "non_selected_median": 0.6890175938606262,
+        "interpretation": "Difference is not significant (p=0.7490) with negligible effect size. Selected papers have higher values."
+      },
+      "diversity_score": {
+        "variable": "diversity_score",
+        "u_statistic": 1112366.5,
+        "p_value": 1.1177532248446936e-27,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": 0.29383305515007363,
+        "significant": true,
+        "selected_median": 0.32811064,
+        "non_selected_median": 0.28984383,
+        "interpretation": "Difference is significant (p=0.0000) with small effect size. Selected papers have higher values."
+      },
+      "representativeness_score": {
+        "variable": "representativeness_score",
+        "u_statistic": 1158895.5,
+        "p_value": 4.208143005992881e-38,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": 0.34795259059372263,
+        "significant": true,
+        "selected_median": 0.4978323,
+        "non_selected_median": 0.47989499,
+        "interpretation": "Difference is significant (p=0.0000) with medium effect size. Selected papers have higher values."
+      },
+      "xai_alignment": {
+        "variable": "xai_alignment",
+        "u_statistic": 852972.5,
+        "p_value": 0.6936137213361261,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": -0.007877335721638401,
+        "significant": false,
+        "selected_median": 0.125,
+        "non_selected_median": 0.125,
+        "interpretation": "Difference is not significant (p=0.6936) with negligible effect size. Selected papers have lower values."
+      },
+      "symbolic_alignment": {
+        "variable": "symbolic_alignment",
+        "u_statistic": 860630.5,
+        "p_value": 0.9661724232196955,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": 0.0010299565568860913,
+        "significant": false,
+        "selected_median": 0.0833333333333333,
+        "non_selected_median": 0.0833333333333333,
+        "interpretation": "Difference is not significant (p=0.9662) with negligible effect size. Selected papers have higher values."
+      },
+      "subsymbolic_alignment": {
+        "variable": "subsymbolic_alignment",
+        "u_statistic": 842709.5,
+        "p_value": 0.439697771369179,
+        "n_selected": 535,
+        "n_non_selected": 3214,
+        "rank_biserial_correlation": -0.019814596188404754,
+        "significant": false,
+        "selected_median": 0.1111111111111111,
+        "non_selected_median": 0.1111111111111111,
+        "interpretation": "Difference is not significant (p=0.4397) with negligible effect size. Selected papers have lower values."
+      }
+    },
+    "multiple_testing_correction": {
+      "method": "fdr_bh",
+      "original_alpha": 0.05,
+      "original_p_values": [
+        0.748977971865366,
+        1.1177532248446936e-27,
+        4.208143005992881e-38,
+        0.6936137213361261,
+        0.9661724232196955,
+        0.439697771369179
+      ],
+      "adjusted_p_values": [
+        0.8987735662384391,
+        3.353259674534081e-27,
+        2.5248858035957285e-37,
+        0.8987735662384391,
+        0.9661724232196955,
+        0.879395542738358
+      ],
+      "rejected_hypotheses": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "significant_tests_after_correction": 2,
+      "total_tests": 6
+    }
+  },
+  "effect_size_analysis": {
+    "similarity_to_centroid": {
+      "variable": "similarity_to_centroid",
+      "cohens_d": 0.03276088110600771,
+      "confidence_interval": [
+        -0.05878958262179526,
+        0.12431134483381068
+      ],
+      "effect_size_category": "negligible",
+      "practical_significance": false,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.6801631388820221,
+        "non_selected": 0.6767434867582265
+      },
+      "interpretation": "Selected papers have higher values with negligible effect size (d=0.033)"
+    },
+    "diversity_score": {
+      "variable": "diversity_score",
+      "cohens_d": 0.5727019827526679,
+      "confidence_interval": [
+        0.4802407258319493,
+        0.6651632396733865
+      ],
+      "effect_size_category": "medium",
+      "practical_significance": true,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.3445142826728972,
+        "non_selected": 0.2582714015463023
+      },
+      "interpretation": "Selected papers have higher values with medium effect size (d=0.573)"
+    },
+    "representativeness_score": {
+      "variable": "representativeness_score",
+      "cohens_d": 0.6360186866024428,
+      "confidence_interval": [
+        0.5433455016575673,
+        0.7286918715473182
+      ],
+      "effect_size_category": "medium",
+      "practical_significance": true,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.4955562721869159,
+        "non_selected": 0.4465838414449284
+      },
+      "interpretation": "Selected papers have higher values with medium effect size (d=0.636)"
+    },
+    "xai_alignment": {
+      "variable": "xai_alignment",
+      "cohens_d": -0.013751353165962042,
+      "confidence_interval": [
+        -0.10529934126668115,
+        0.07779663493475707
+      ],
+      "effect_size_category": "negligible",
+      "practical_significance": false,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.14602803738317757,
+        "non_selected": 0.14709085252022402
+      },
+      "interpretation": "Selected papers have lower values with negligible effect size (d=-0.014)"
+    },
+    "symbolic_alignment": {
+      "variable": "symbolic_alignment",
+      "cohens_d": 0.011634522211912192,
+      "confidence_interval": [
+        -0.07991331542527871,
+        0.1031823598491031
+      ],
+      "effect_size_category": "negligible",
+      "practical_significance": false,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.10841121495327098,
+        "non_selected": 0.10739473138353034
+      },
+      "interpretation": "Selected papers have higher values with negligible effect size (d=0.012)"
+    },
+    "subsymbolic_alignment": {
+      "variable": "subsymbolic_alignment",
+      "cohens_d": -0.04011696894601322,
+      "confidence_interval": [
+        -0.1316689336704483,
+        0.05143499577842186
+      ],
+      "effect_size_category": "negligible",
+      "practical_significance": false,
+      "sample_sizes": {
+        "selected": 535,
+        "non_selected": 3214
+      },
+      "means": {
+        "selected": 0.1470404984423676,
+        "non_selected": 0.15131715411740304
+      },
+      "interpretation": "Selected papers have lower values with negligible effect size (d=-0.040)"
+    }
+  },
+  "temporal_analysis": {
+    "kolmogorov_smirnov_test": {
+      "statistic": 0.04936347405335303,
+      "p_value": 0.20584139065861362,
+      "significant_difference": false
+    },
+    "descriptive_stats": {
+      "selected_year_range": [
+        2017,
+        2025
+      ],
+      "non_selected_year_range": [
+        2017,
+        2026
+      ],
+      "selected_median_year": 2023.0,
+      "non_selected_median_year": 2022.0,
+      "selected_mean_year": 2022.23738317757,
+      "non_selected_mean_year": 2022.1278780336029
+    },
+    "yearly_selection_rates": {
+      "('is_selected_representative', 'count')": {
+        "2017": 89,
+        "2018": 119,
+        "2019": 201,
+        "2020": 389,
+        "2021": 622,
+        "2022": 539,
+        "2023": 581,
+        "2024": 747,
+        "2025": 461,
+        "2026": 1
+      },
+      "('is_selected_representative', 'sum')": {
+        "2017": 17,
+        "2018": 15,
+        "2019": 22,
+        "2020": 47,
+        "2021": 79,
+        "2022": 80,
+        "2023": 109,
+        "2024": 96,
+        "2025": 70,
+        "2026": 0
+      },
+      "('is_selected_representative', 'mean')": {
+        "2017": 0.191,
+        "2018": 0.126,
+        "2019": 0.109,
+        "2020": 0.121,
+        "2021": 0.127,
+        "2022": 0.148,
+        "2023": 0.188,
+        "2024": 0.129,
+        "2025": 0.152,
+        "2026": 0.0
+      }
+    },
+    "temporal_bias_assessment": "No significant temporal bias detected - selection is temporally representative"
+  },
+  "summary": {
+    "total_variables_analyzed": 6,
+    "significant_mann_whitney_tests": 2,
+    "large_effect_sizes": 0,
+    "medium_effect_sizes": 2,
+    "temporal_bias_detected": false
+  }
+}

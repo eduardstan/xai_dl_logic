@@ -8,10 +8,10 @@ version = "0.1.0"
 description = "A unified framework for systematic bibliography analysis using advanced topic modeling, paper selection, and visualization."
 readme = "README.md"
 authors = [
-    { name = "Eduard", email = "your@email.com" }
+    { name = "Eduard", email = "stan.i.eduard@gmail.com" }
 ]
 maintainers = [
-    { name = "Eduard", email = "your@email.com" }
+    { name = "Eduard", email = "stan.i.eduard@gmail.com" }
 ]
 requires-python = ">=3.11"
 license = { text = "MIT" }
