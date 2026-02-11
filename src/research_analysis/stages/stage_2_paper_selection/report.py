@@ -46,6 +46,7 @@ def generate_selection_report(
             _generate_header(timestamp),
             _generate_executive_summary(results_df, selected_df, summary_df),
             _generate_selection_config(config),
+            _generate_r1_mapping(results_df),
             _generate_metrics_comparison(results_df, selected_df),
             _generate_research_alignment(selected_df),
             _generate_assignment_analysis(results_df),
@@ -94,6 +95,38 @@ def _generate_selection_config(config: AppConfig) -> str:
 - **Diversity Weight:** {cfg.metrics.diversity_weight}
 - **Similarity Threshold:** {cfg.metrics.similarity_threshold}
 - **Use Iterative Selection:** {cfg.metrics.use_iterative_selection}"""
+
+
+def _generate_r1_mapping(results_df: pd.DataFrame) -> str:
+    """Generate a section documenting the topic mapping for R1 papers."""
+    if "source" not in results_df.columns:
+        return ""
+        
+    r1_papers = results_df[results_df["source"] == "r1_reviewer"]
+    if r1_papers.empty:
+        return ""
+        
+    lines = ["## Reviewer (R1) Paper Mapping"]
+    lines.append("The following papers were added to the pool from `r1.bib` and assigned to existing topics based on centroid similarity:")
+    lines.append("")
+    lines.append("| Title | Year | Topic ID | Similarity to Centroid |")
+    lines.append("|-------|------|----------|------------------------|")
+    
+    # Sort by topic_id for readability
+    for _, paper in r1_papers.sort_values("topic_id").iterrows():
+        title = paper.get("title", "N/A")
+        # Remove braces if they exist (common in BibTeX)
+        if isinstance(title, str):
+            title = title.strip("{}")
+            if len(title) > 60:
+                title = title[:57] + "..."
+        
+        year = paper.get("year", "N/A")
+        topic_id = paper.get("topic_id", "N/A")
+        sim = paper.get("similarity_to_centroid", 0.0)
+        lines.append(f"| {title} | {year} | {topic_id} | {sim:.4f} |")
+        
+    return "\n".join(lines)
 
 
 def _generate_metrics_comparison(
