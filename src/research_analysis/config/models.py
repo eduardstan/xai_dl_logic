@@ -160,10 +160,19 @@ class ResearchAlignmentConfig(BaseModel):
     symbolic: List[str]
     subsymbolic: List[str]
 
+class AugmentationConfig(BaseModel):
+    enabled: bool = False
+    r1_bib_file: str = "data/r1.bib"
+    min_similarity_threshold: float = Field(
+        0.3, ge=0.0, le=1.0, description="Min similarity to topic centroid for assignment."
+    )
+    run_medoid_analysis: bool = True
+
 class Stage2Config(BaseModel):
     selection_strategy: SelectionStrategyConfig
     metrics: MetricsConfig
     research_alignment: ResearchAlignmentConfig
+    augmentation: AugmentationConfig = Field(default_factory=AugmentationConfig)
 
 
 # --- Models for stage_3_visualization.yaml ---

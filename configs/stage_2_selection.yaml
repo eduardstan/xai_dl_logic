@@ -63,3 +63,14 @@ research_alignment:
   xai: ["explainab*", "interpretab*", "accountab*", "explicab*", "transparen*", "translucen*", "XAI", "IML"]
   symbolic: ["symbol*", "logic*", "formal*", "knowledge*", "ontolog*", "decision tree*", "decision list*", "decision set*", "constraint*", "rule", "rules", "reasoning"]
   subsymbolic: ["sub*symbolic", "deep*learning", "neural*", "network*", "layer*", "tensor*", "differentiab*", "neuro*symbolic", "deep reinforcement learning"]
+
+# Parameters for integrating additional papers (e.g., from reviewer requests)
+augmentation:
+  # Whether to enable paper pool augmentation.
+  enabled: true
+  # Path to the BiB file containing the additional papers.
+  r1_bib_file: "data/r1.bib"
+  # Min cosine similarity to existing topic centroid for a paper to be assigned to it.
+  min_similarity_threshold: 0.3
+  # Whether to run the medoid-based investigation of representatives.
+  run_medoid_analysis: true

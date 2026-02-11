@@ -2,6 +2,7 @@
 """
 Mathematical and vector-based utility functions for the research analysis framework.
 """
+from typing import Dict, Tuple
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -19,6 +20,66 @@ def compute_cluster_centroid(cluster_embeddings: np.ndarray) -> np.ndarray:
     if cluster_embeddings.ndim != 2:
         raise ValueError("Input embeddings must be a 2D array.")
     return np.mean(cluster_embeddings, axis=0)
+
+
+def compute_cluster_centroids(
+    embeddings: np.ndarray, labels: np.ndarray
+) -> Dict[int, np.ndarray]:
+    """
+    Computes the centroids for multiple clusters.
+
+    Args:
+        embeddings: A 2D NumPy array of embeddings.
+        labels: A 1D NumPy array of cluster labels.
+
+    Returns:
+        A dictionary mapping cluster labels to their 1D centroid embeddings.
+    """
+    if embeddings.shape[0] != labels.shape[0]:
+        raise ValueError("Number of embeddings and labels must match.")
+
+    centroids = {}
+    unique_labels = np.unique(labels)
+    for label in unique_labels:
+        # Skip noise if labeled as -1 (optional, depends on caller, but usually safe)
+        cluster_embeddings = embeddings[labels == label]
+        centroids[int(label)] = compute_cluster_centroid(cluster_embeddings)
+
+    return centroids
+
+
+def compute_cluster_medoid(cluster_embeddings: np.ndarray) -> Tuple[np.ndarray, int]:
+    """
+    Computes the medoid of a cluster of embeddings.
+
+    The medoid is the point in the cluster that has the highest average
+    similarity to all other points in the cluster.
+
+    Args:
+        cluster_embeddings: A 2D NumPy array of embeddings.
+
+    Returns:
+        A tuple containing:
+            - A 1D NumPy array representing the medoid embedding.
+            - The index of the medoid within the cluster_embeddings array.
+    """
+    if cluster_embeddings.ndim != 2:
+        raise ValueError("Input embeddings must be a 2D array.")
+    
+    if len(cluster_embeddings) == 0:
+        raise ValueError("Cluster has no embeddings.")
+    if len(cluster_embeddings) == 1:
+        return cluster_embeddings[0], 0
+
+    # Compute pairwise similarity matrix
+    sim_matrix = compute_pairwise_similarity_matrix(cluster_embeddings)
+    
+    # Maximize average similarity (sum of similarities is equivalent)
+    # Diagonal is 1.0 (self-similarity), which is constant for all points.
+    sim_sums = np.sum(sim_matrix, axis=1)
+    medoid_idx = np.argmax(sim_sums)
+
+    return cluster_embeddings[medoid_idx], int(medoid_idx)
 
 
 def compute_cosine_similarity_to_centroid(

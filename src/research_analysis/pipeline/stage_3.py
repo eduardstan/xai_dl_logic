@@ -49,7 +49,40 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
         logger.info(f"Loading artifacts from {stage_2_input_dir}...")
         df_all, df_summary, df_selected = load_stage_2_artifacts(stage_2_input_dir)
 
-        # 2. Create static visualizations
+        # 2. Load model from Stage 1 for hierarchy visualization
+        stage_1_input_dir = output_dir / config.pipeline.paths.stage_1_path
+        model_path = stage_1_input_dir / "bertopic_model"
+        if not model_path.exists():
+            logger.warning(f"BERTopic model not found at {model_path}. Skipping hierarchy visualization.")
+            topic_model = None
+        else:
+            from bertopic import BERTopic
+            topic_model = BERTopic.load(model_path)
+            
+        # 3. HDBSCAN Hierarchy Visualization
+        if topic_model:
+            from research_analysis.stages.stage_3_visualization.hdbscan_hierarchy import visualize_hdbscan_structure
+            # Compute hierarchy using the ORIGINAL pool only (3749 papers)
+            # This avoids length mismatch issues with the trained BERTopic model
+            df_original = df_all[df_all['source'] != 'r1_reviewer'].copy()
+            docs = df_original['title'].fillna('') + " " + df_original['abstract'].fillna('')
+            
+            logger.info(f"Visualizing hierarchy using {len(df_original)} original papers...")
+            visualize_hdbscan_structure(topic_model, stage_3_output_dir, docs=docs.tolist())
+
+        # 4. Load Medoid Comparison Results from Stage 2
+        medoid_results = None
+        medoid_path = stage_2_input_dir / "medoid_comparison.json"
+        if medoid_path.exists():
+            import json
+            try:
+                with open(medoid_path, 'r') as f:
+                    medoid_results = json.load(f)
+                logger.info("Loaded medoid comparison results.")
+            except Exception as e:
+                logger.warning(f"Could not load medoid comparison results: {e}")
+
+        # 5. Create static visualizations
         logger.info("Creating metrics overview...")
         create_metrics_overview(df_all, df_selected, stage_3_output_dir)
 
@@ -59,11 +92,11 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
         logger.info("Creating network visualizations...")
         create_network_visualizations(df_all, stage_3_output_dir)
 
-        # 3. Create interactive visualizations
+        # 6. Create interactive visualizations
         logger.info("Creating interactive visualizations...")
         create_interactive_visualizations(df_all, df_selected, df_summary, stage_3_output_dir)
 
-        # 4. Perform statistical analysis (if enabled)
+        # 7. Perform statistical analysis (if enabled)
         statistical_results = None
         statistical_plots = {}
         
@@ -108,10 +141,11 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
             yaml.dump(config.dict(), f, default_flow_style=False)
         logger.info(f"Stage 3 configuration saved to: {config_path}")
 
-        # 5. Generate comprehensive report
+        # 8. Generate comprehensive report
         logger.info("Generating enhanced statistics report...")
         generate_enhanced_statistics_report(
-            df_all, df_selected, df_summary, stage_3_output_dir
+            df_all, df_selected, df_summary, stage_3_output_dir, 
+            medoid_results=medoid_results
         )
 
         # 6. Log completion summary
