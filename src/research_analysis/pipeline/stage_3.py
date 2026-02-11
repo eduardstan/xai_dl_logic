@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, Any
 import numpy as np
 import yaml
+import pandas as pd # Added for data manipulation in statistical analysis preparation
 
 from research_analysis.config.models import AppConfig
 from research_analysis.stages.stage_3_visualization.data_loader import load_stage_2_artifacts
@@ -101,11 +102,16 @@ def run_stage_3(config: AppConfig, output_dir: Path) -> None:
         statistical_plots = {}
         
         if config.stage_3.statistical_analysis.enabled:
+            # Perform statistical analysis
             logger.info("Performing comprehensive statistical analysis...")
             
-            # Split data for statistical comparison
-            selected_df = df_all[df_all['is_selected_representative'] == True]
-            non_selected_df = df_all[df_all['is_selected_representative'] == False]
+            # Filter for original pool to ensure selection statistics reflect the standard workflow
+            # (R1 papers were not part of the selection pool and should not shift the background distribution)
+            is_r1 = df_all.get('source', pd.Series([False] * len(df_all))) == 'r1_reviewer'
+            original_pool_df = df_all.iloc[~is_r1.values]
+            
+            selected_df = original_pool_df[original_pool_df['is_selected_representative'] == True]
+            non_selected_df = original_pool_df[original_pool_df['is_selected_representative'] == False]
             
             # Get variables to analyze
             variables = (config.stage_3.statistical_analysis.primary_metrics + 
