@@ -70,6 +70,12 @@ def process_topics(
             topic_embeddings, selected_local_indices, config
         )
 
+        # Precompute medoid if needed
+        medoid_embedding = None
+        if config.stage_2.augmentation.run_medoid_analysis:
+            from research_analysis.utils.math import compute_cluster_medoid
+            medoid_embedding, _ = compute_cluster_medoid(topic_embeddings)
+
         for local_idx, global_idx in enumerate(topic_indices):
             doc = documents_df.iloc[global_idx]
             
@@ -85,7 +91,10 @@ def process_topics(
             }
             
             paper_metrics = metrics.compute_paper_metrics(
-                embeddings[global_idx], topic_embeddings, config
+                embeddings[global_idx], 
+                topic_embeddings, 
+                config,
+                medoid_embedding=medoid_embedding
             )
             
             # Fix metrics key to match legacy naming
@@ -137,7 +146,20 @@ def process_topics(
     )
 
     logger.info("Successfully processed topics and selected representatives.")
-    return results_df, summary_df, selected_df
+    
+    # Extract topic centers for reuse
+    topic_centers = {}
+    for topic_id in sorted(topic_info.Topic.unique()):
+        if topic_id == -1: continue
+        topic_mask = np.array(topics) == topic_id
+        if not any(topic_mask): continue
+        topic_embeddings = embeddings[topic_mask]
+        from research_analysis.utils.math import compute_cluster_centroid, compute_cluster_medoid
+        centroid = compute_cluster_centroid(topic_embeddings)
+        medoid, _ = compute_cluster_medoid(topic_embeddings)
+        topic_centers[topic_id] = {'centroid': centroid, 'medoid': medoid}
+
+    return results_df, summary_df, selected_df, topic_centers
 
 
 def _create_summary_df(results_df: pd.DataFrame) -> pd.DataFrame:

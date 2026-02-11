@@ -24,6 +24,8 @@ def compute_paper_metrics(
     paper_embedding: np.ndarray,
     cluster_embeddings: np.ndarray,
     config: AppConfig,
+    centroid_embedding: np.ndarray = None,
+    medoid_embedding: np.ndarray = None,
 ) -> Dict[str, float]:
     """
     Computes a set of metrics for a single paper relative to its cluster.
@@ -32,6 +34,8 @@ def compute_paper_metrics(
         paper_embedding: The embedding of the paper to analyze.
         cluster_embeddings: Embeddings of all papers in the same cluster.
         config: The application configuration.
+        centroid_embedding: Precomputed centroid (optional).
+        medoid_embedding: Precomputed medoid (optional).
 
     Returns:
         A dictionary containing the calculated metrics for the paper.
@@ -40,28 +44,37 @@ def compute_paper_metrics(
         raise ValueError(
             f"paper_embedding must be a 1D vector, but got shape {paper_embedding.shape}"
         )
-    if cluster_embeddings.ndim != 2:
-        raise ValueError(
-            "cluster_embeddings must be a 2D matrix, but got shape "
-            f"{cluster_embeddings.shape}"
-        )
-
+    
+    from sklearn.metrics.pairwise import cosine_similarity
+    
     try:
+        # Avoid redundant computations if passed from outer loop
+        if centroid_embedding is None:
+            from research_analysis.utils.math import compute_cluster_centroid
+            centroid_embedding = compute_cluster_centroid(cluster_embeddings)
+        
         # 1. Similarity to cluster centroid (centrality)
-        similarity_to_centroid = compute_cosine_similarity_to_centroid(
-            paper_embedding, cluster_embeddings
-        )
+        similarity_to_centroid = float(cosine_similarity(
+            paper_embedding.reshape(1, -1), centroid_embedding.reshape(1, -1)
+        )[0, 0])
 
-        # 2. Average similarity to all other papers in the cluster
+        # 2. Similarity to cluster medoid
+        similarity_to_medoid = 0.0
+        if medoid_embedding is not None:
+            similarity_to_medoid = float(cosine_similarity(
+                paper_embedding.reshape(1, -1), medoid_embedding.reshape(1, -1)
+            )[0, 0])
+
+        # 3. Average similarity to all other papers in the cluster
         pairwise_sims = compute_pairwise_similarities(
             paper_embedding, cluster_embeddings
         )
         avg_similarity_to_cluster = float(np.mean(pairwise_sims))
 
-        # 3. Diversity score (uniqueness)
+        # 4. Diversity score (uniqueness)
         diversity = compute_diversity_score(paper_embedding, cluster_embeddings)
 
-        # 4. Final representativeness score (weighted combination)
+        # 5. Final representativeness score (weighted combination)
         representativeness = compute_representativeness_score(
             centrality_score=similarity_to_centroid,
             diversity_score=diversity,
@@ -70,15 +83,16 @@ def compute_paper_metrics(
 
         return {
             "similarity_to_centroid": similarity_to_centroid,
+            "similarity_to_medoid": similarity_to_medoid,
             "avg_similarity_to_cluster": avg_similarity_to_cluster,
             "diversity_score": diversity,
             "representativeness_score": representativeness,
         }
     except Exception as e:
         logger.error(f"Failed to compute metrics for paper: {e}")
-        # Return default values in case of an error to avoid crashing the pipeline
         return {
             "similarity_to_centroid": 0.0,
+            "similarity_to_medoid": 0.0,
             "avg_similarity_to_cluster": 0.0,
             "diversity_score": 0.0,
             "representativeness_score": 0.0,
@@ -110,12 +124,27 @@ def calculate_all_metrics_for_topic(
         logger.warning(f"No embeddings found for Topic {topic_id}. Skipping metrics.")
         return df_topic
 
+    # Precompute centroid and medoid for efficiency
+    from research_analysis.utils.math import compute_cluster_centroid, compute_cluster_medoid
+    centroid_embedding = compute_cluster_centroid(cluster_embeddings)
+    medoid_embedding = None
+    if config.stage_2.augmentation.run_medoid_analysis:
+        medoid_embedding, _ = compute_cluster_medoid(cluster_embeddings)
+
     metrics_list = []
-    for paper_id in df_topic["id"]:
+    id_col = "id" if "id" in df_topic.columns else "ID"
+    for paper_id in df_topic[id_col]:
         paper_embedding = embeddings_map[paper_id]
-        metrics = compute_paper_metrics(paper_embedding, cluster_embeddings, config)
+        metrics = compute_paper_metrics(
+            paper_embedding, 
+            cluster_embeddings, 
+            config,
+            centroid_embedding=centroid_embedding,
+            medoid_embedding=medoid_embedding
+        )
         metrics["id"] = paper_id
         metrics_list.append(metrics)
 
     metrics_df = pd.DataFrame(metrics_list)
-    return pd.merge(df_topic, metrics_df, on="id", how="left") 
+    return pd.merge(df_topic, metrics_df, on="id", how="left")
+ 
