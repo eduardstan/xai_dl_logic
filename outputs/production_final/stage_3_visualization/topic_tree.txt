@@ -1,0 +1,115 @@
+.
+├─graph_reasoning_features_prediction_classification
+│    ├─explanations_representation_reasoning_diagnosis_explainable
+│    │    ├─attention_representation_representations_mechanism_explanations
+│    │    │    ├─■──graph_node_structural_pooling_graph pooling ── Topic: 37
+│    │    │    └─■──gnns_gnn_graph_graph neural_explanation ── Topic: 15
+│    │    └─explanations_explainable_vqa_question_reasoning
+│    │         ├─vqa_question_diagnosis_reasoning_explanations
+│    │         │    ├─vqa_question_reasoning_evidence_answering
+│    │         │    │    ├─■──rules_rule_logical_completion_knowledge graph ── Topic: 50
+│    │         │    │    └─■──entities_relation_knowledge graph_inductive_link prediction ── Topic: 35
+│    │         │    └─■──temporal_temporal knowledge_completion_tkg_knowledge graphs ── Topic: 56
+│    │         └─■──multihop_reasoning_multihop reasoning_knowledge graph_kgs ── Topic: 51
+│    └─graph_reasoning_features_classification_prediction
+│         ├─graph_reasoning_attention_diagnosis_features
+│         │    ├─■──visual_reasoning_vqa_question_answering ── Topic: 1
+│         │    └─graph_news_fault_features_diagnosis
+│         │         ├─■──reasoning_language_answering_natural_question ── Topic: 33
+│         │         └─■──question_multihop_answering_qa_question answering ── Topic: 27
+│         └─■──language_rnns_natural language_rnn_text ── Topic: 3
+└─graph_features_reasoning_prediction_classification
+     ├─graph_reasoning_neural networks_prediction_features
+     │    ├─boolean_features_rl_deep learning_feedback
+     │    │    ├─■──disentangled_disentanglement_vae_learning disentangled_factors ── Topic: 52
+     │    │    └─■──latent_gans_latent space_generative_gan ── Topic: 31
+     │    └─graph_reasoning_neural networks_recommendation_prediction
+     │         ├─reasoning_graph_recommendation_neural networks_prediction
+     │         │    ├─■──zeroshot_zeroshot learning_unseen_fewshot_attribute ── Topic: 43
+     │         │    └─graph_reasoning_recommendation_prediction_neural networks
+     │         │         ├─■──image_images_reconstruction_unfolding_prior ── Topic: 23
+     │         │         └─graph_reasoning_neural networks_wind_recommendation
+     │         │              ├─■──image_cnn_parts_object_cnns ── Topic: 11
+     │         │              └─■──saliency_object_object detection_maps_saliency maps ── Topic: 42
+     │         └─graph_visual_covid19_causal_modeling
+     │              ├─■──pose_3d_object_estimation_objects ── Topic: 21
+     │              └─■──depth_glass_surface_fluid_completion ── Topic: 45
+     └─graph_features_prediction_classification_reasoning
+          ├─graph_fuzzy_features_reasoning_classification
+          │    ├─graph_fuzzy_classification_prediction_accuracy
+          │    │    ├─classification_classifiers_neural networks_features_decision
+          │    │    │    ├─■──consensus_security_distributed_technology_privacy ── Topic: 36
+          │    │    │    └─classifiers_classification_classifier_fuzzy_risk
+          │    │    │         ├─■──attacks_adversarial_privacy_attack_federated ── Topic: 4
+          │    │    │         └─■──malware_detection_malicious_traffic_security ── Topic: 19
+          │    │    └─graph_fuzzy_reasoning_accuracy_prediction
+          │    │         ├─fuzzy_graph_reasoning_dataset_attention
+          │    │         │    ├─■──explanations_attribution_explanation_dnns_explanation methods ── Topic: 24
+          │    │         │    └─■──counterfactual_explanations_counterfactual explanations_counterfactuals_counterfactual explanation ── Topic: 20
+          │    │         └─graph_node_accuracy_prediction_reasoning
+          │    │              ├─■──xai_ai_intelligence_artificial_artificial intelligence ── Topic: 13
+          │    │              └─■──ai_healthcare_explainability_clinical_intelligence ── Topic: 46
+          │    └─graph_fuzzy_features_reasoning_image
+          │         ├─fuzzy_explainable_graph_reasoning_image
+          │         │    ├─visual_target_traffic_reasoning_paragraph
+          │         │    │    ├─■──neurosymbolic_symbolic_ai_neurosymbolic ai_nesy ── Topic: 54
+          │         │    │    └─■──logic_ilp_relational_firstorder_differentiable ── Topic: 30
+          │         │    └─fuzzy_explainable_graph_features_neural networks
+          │         │         ├─■──optimization_symbolic_optimizers_sr_symbolic regression ── Topic: 49
+          │         │         └─fuzzy_graph_explainable_rules_features
+          │         │              ├─■──reinforcement learning_reinforcement_policies_policy_agents ── Topic: 2
+          │         │              └─■──robot_demonstrations_navigation_robots_manipulation ── Topic: 17
+          │         └─features_graph_feature_image_reasoning
+          │              ├─graph_features_reasoning_image_feature
+          │              │    ├─■──bayesian_bayesian networks_tractable_bayesian network_classifiers ── Topic: 48
+          │              │    └─graph_features_reasoning_image_task
+          │              │         ├─fuzzy_features_feature_neural network_ai
+          │              │         │    ├─■──trees_decision_decision trees_tree_ensemble ── Topic: 12
+          │              │         │    └─■──rules_rule_neural networks_decision_logic ── Topic: 38
+          │              │         └─graph_reasoning_machine_image_classification
+          │              │              ├─■──fuzzy_rules_fuzzy rules_rule_tsk ── Topic: 0
+          │              │              └─■──pruning_monotonic_neural networks_constraints_convex ── Topic: 18
+          │              └─■──fairness_fair_trees_bias_survival ── Topic: 53
+          └─graph_prediction_features_classification_neural networks
+               ├─graph_prediction_features_classification_neural networks
+               │    ├─features_prediction_accuracy_graph_classification
+               │    │    ├─features_prediction_classification_accuracy_graph
+               │    │    │    ├─classification_features_accuracy_prediction_graph
+               │    │    │    │    ├─traffic_task_graph_accuracy_ilp
+               │    │    │    │    │    ├─■──energy_wind_ml_forecasting_energy forecasting ── Topic: 47
+               │    │    │    │    │    └─traffic_task_ilp_accuracy_machine
+               │    │    │    │    │         ├─traffic_accuracy_machine_human_task
+               │    │    │    │    │         │    ├─■──physical_dynamics_physics_equations_differential ── Topic: 34
+               │    │    │    │    │         │    └─■──concrete_materials_machine_prediction_machine learning ── Topic: 41
+               │    │    │    │    │         └─■──fault_fault diagnosis_diagnosis_industrial_domain ── Topic: 10
+               │    │    │    │    └─classification_features_explainable_brain_representation
+               │    │    │    │         ├─brain_classification_explainable_features_user
+               │    │    │    │         │    ├─■──spiking_spiking neural_neurons_biological_brain ── Topic: 44
+               │    │    │    │         │    └─classification_features_explainable_fuzzy_reasoning
+               │    │    │    │         │         ├─■──drug_protein_gene_molecular_cancer ── Topic: 16
+               │    │    │    │         │         └─■──clustering_tensor_matrix_factorization_nonnegative ── Topic: 6
+               │    │    │    │         └─■──time series_series_time_forecasting_timeseries ── Topic: 25
+               │    │    │    └─activity_explanations_prediction_inference_features
+               │    │    │         ├─■──traffic_urban_forecasting_spatiotemporal_spatial ── Topic: 40
+               │    │    │         └─■──driving_autonomous_trajectory_pedestrian_autonomous driving ── Topic: 14
+               │    │    └─malware_graph_concepts_reasoning_detection
+               │    │         ├─■──stock_price_financial_investment_market ── Topic: 32
+               │    │         └─■──credit_financial_fraud_risk_fraud detection ── Topic: 26
+               │    └─graph_prediction_neural networks_classification_reasoning
+               │         ├─graph_neural networks_prediction_reasoning_classification
+               │         │    ├─■──ecg_heart_deep learning_clinical_pediatric ── Topic: 57
+               │         │    └─graph_neural networks_prediction_explainability_reasoning
+               │         │         ├─graph_neural networks_prediction_explainability_deep learning
+               │         │         │    ├─■──medical_clinical_health_ehr_patients ── Topic: 5
+               │         │         │    └─■──eeg_depression_sleep_emotion_affective ── Topic: 22
+               │         │         └─■──social_media_news_social media_detection ── Topic: 9
+               │         └─prediction_detection_features_image_deep learning
+               │              ├─prediction_causal_image_decision_deep learning
+               │              │    ├─■──students_tracing_knowledge tracing_cognitive_cognitive diagnosis ── Topic: 8
+               │              │    └─■──dialogue_dialog_conversational_responses_generation ── Topic: 28
+               │              └─detection_human_community_price_classification
+               │                   ├─■──topic_topics_topic models_topic modeling_document ── Topic: 39
+               │                   └─■──sentiment_sentiment analysis_aspect_sentiment classification_aspects ── Topic: 55
+               └─glass_graph_representation_feature_rules
+                    ├─■──recommendation_users_items_user_item ── Topic: 7
+                    └─■──recommendation_recommender_recommender systems_recommendations_users ── Topic: 29

@@ -1,0 +1,408 @@
+[
+    {
+        "topic_id": 0,
+        "spearman_rho": 0.7923460978380886,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 208
+    },
+    {
+        "topic_id": 1,
+        "spearman_rho": 0.925207568134819,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 180
+    },
+    {
+        "topic_id": 2,
+        "spearman_rho": 0.833955606996845,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 137
+    },
+    {
+        "topic_id": 3,
+        "spearman_rho": 0.8307378464431155,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 158
+    },
+    {
+        "topic_id": 4,
+        "spearman_rho": 0.8556507971637485,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 89
+    },
+    {
+        "topic_id": 5,
+        "spearman_rho": 0.9217588527948494,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 135
+    },
+    {
+        "topic_id": 6,
+        "spearman_rho": 0.8422916888936306,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 104
+    },
+    {
+        "topic_id": 7,
+        "spearman_rho": 0.9154246822696019,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 120
+    },
+    {
+        "topic_id": 8,
+        "spearman_rho": 0.8945871899296556,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 74
+    },
+    {
+        "topic_id": 9,
+        "spearman_rho": 0.7296238244514106,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 87
+    },
+    {
+        "topic_id": 10,
+        "spearman_rho": 0.937656299531542,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 88
+    },
+    {
+        "topic_id": 11,
+        "spearman_rho": 0.9049387889373636,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 183
+    },
+    {
+        "topic_id": 12,
+        "spearman_rho": 0.87553231015462,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 108
+    },
+    {
+        "topic_id": 13,
+        "spearman_rho": 0.9413992997761579,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 132
+    },
+    {
+        "topic_id": 14,
+        "spearman_rho": 0.8151645639747174,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 62
+    },
+    {
+        "topic_id": 15,
+        "spearman_rho": 0.9462737127371275,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 81
+    },
+    {
+        "topic_id": 16,
+        "spearman_rho": 0.801278132814671,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 60
+    },
+    {
+        "topic_id": 17,
+        "spearman_rho": 0.9079428034651916,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 66
+    },
+    {
+        "topic_id": 18,
+        "spearman_rho": 0.8765538259209145,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 78
+    },
+    {
+        "topic_id": 19,
+        "spearman_rho": 0.8866217023819688,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 52
+    },
+    {
+        "topic_id": 20,
+        "spearman_rho": 0.9021658644946319,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 73
+    },
+    {
+        "topic_id": 21,
+        "spearman_rho": 0.8872814685314685,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 65
+    },
+    {
+        "topic_id": 22,
+        "spearman_rho": 0.671155160628845,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 56
+    },
+    {
+        "topic_id": 23,
+        "spearman_rho": 0.7933065824297788,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 52
+    },
+    {
+        "topic_id": 24,
+        "spearman_rho": 0.9189024390243902,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 81
+    },
+    {
+        "topic_id": 25,
+        "spearman_rho": 0.8726868574604059,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 60
+    },
+    {
+        "topic_id": 26,
+        "spearman_rho": 0.8052532833020638,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 40
+    },
+    {
+        "topic_id": 27,
+        "spearman_rho": 0.9363265306122448,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 50
+    },
+    {
+        "topic_id": 28,
+        "spearman_rho": 0.74298128342246,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 33
+    },
+    {
+        "topic_id": 29,
+        "spearman_rho": 0.7839795918367346,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 49
+    },
+    {
+        "topic_id": 30,
+        "spearman_rho": 0.782608695652174,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 47
+    },
+    {
+        "topic_id": 31,
+        "spearman_rho": 0.8661943319838057,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 39
+    },
+    {
+        "topic_id": 32,
+        "spearman_rho": 0.8439171122994653,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 33
+    },
+    {
+        "topic_id": 33,
+        "spearman_rho": 0.9523085914669785,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 59
+    },
+    {
+        "topic_id": 34,
+        "spearman_rho": 0.8429771908763505,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 50
+    },
+    {
+        "topic_id": 35,
+        "spearman_rho": 0.8945993031358886,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 41
+    },
+    {
+        "topic_id": 36,
+        "spearman_rho": 0.9352226720647772,
+        "jaccard_similarity": 1.0,
+        "overlap_percentage": 100.0,
+        "cluster_size": 38
+    },
+    {
+        "topic_id": 37,
+        "spearman_rho": 0.8414331999237659,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 54
+    },
+    {
+        "topic_id": 38,
+        "spearman_rho": 0.9596798550286922,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 43
+    },
+    {
+        "topic_id": 39,
+        "spearman_rho": 0.9025583982202448,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 30
+    },
+    {
+        "topic_id": 40,
+        "spearman_rho": 0.8445539135194308,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 28
+    },
+    {
+        "topic_id": 41,
+        "spearman_rho": 0.8701442841287458,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 52
+    },
+    {
+        "topic_id": 42,
+        "spearman_rho": 0.8931788931788932,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 36
+    },
+    {
+        "topic_id": 43,
+        "spearman_rho": 0.9132369299221357,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 30
+    },
+    {
+        "topic_id": 44,
+        "spearman_rho": 0.6380347959295327,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 38
+    },
+    {
+        "topic_id": 45,
+        "spearman_rho": 0.698616600790514,
+        "jaccard_similarity": 0.1111111111111111,
+        "overlap_percentage": 20.0,
+        "cluster_size": 23
+    },
+    {
+        "topic_id": 46,
+        "spearman_rho": 0.9107123317649634,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 38
+    },
+    {
+        "topic_id": 47,
+        "spearman_rho": 0.8669230769230768,
+        "jaccard_similarity": 0.25,
+        "overlap_percentage": 40.0,
+        "cluster_size": 25
+    },
+    {
+        "topic_id": 48,
+        "spearman_rho": 0.8988142292490119,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 45
+    },
+    {
+        "topic_id": 49,
+        "spearman_rho": 0.9364532019704431,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 29
+    },
+    {
+        "topic_id": 50,
+        "spearman_rho": 0.9457088667614982,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 37
+    },
+    {
+        "topic_id": 51,
+        "spearman_rho": 0.9384615384615382,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 26
+    },
+    {
+        "topic_id": 52,
+        "spearman_rho": 0.9733990147783249,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 29
+    },
+    {
+        "topic_id": 53,
+        "spearman_rho": 0.9401468097120271,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 22
+    },
+    {
+        "topic_id": 54,
+        "spearman_rho": 0.9452173913043478,
+        "jaccard_similarity": 1.0,
+        "overlap_percentage": 100.0,
+        "cluster_size": 24
+    },
+    {
+        "topic_id": 55,
+        "spearman_rho": 0.8817391304347826,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 24
+    },
+    {
+        "topic_id": 56,
+        "spearman_rho": 0.8876923076923076,
+        "jaccard_similarity": 0.42857142857142855,
+        "overlap_percentage": 60.0,
+        "cluster_size": 25
+    },
+    {
+        "topic_id": 57,
+        "spearman_rho": 0.9456521739130436,
+        "jaccard_similarity": 0.6666666666666666,
+        "overlap_percentage": 80.0,
+        "cluster_size": 23
+    }
+]

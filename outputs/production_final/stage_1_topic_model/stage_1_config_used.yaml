@@ -1,0 +1,230 @@
+pipeline:
+  logging:
+    level: INFO
+    retention: 1 week
+    rotation: 10 MB
+  paths:
+    bibliography_file: data/merged.bib
+    cache: cache
+    logs: logs
+    outputs: outputs
+    stage_1_path: stage_1_topic_model
+    stage_2_path: stage_2_paper_selection
+    stage_3_path: stage_3_visualization
+  reproducibility:
+    random_seed: 42
+    timestamp_format: '%Y%m%d_%H%M%S'
+stage_1:
+  bertopic_params:
+    calculate_probabilities: false
+    min_topic_size: 10
+    verbose: true
+  data_processing:
+    text_fields:
+    - abstract
+    - title
+    - keywords
+  domain_guidance:
+    guided_topics:
+      enabled: false
+      topics:
+        convolutional_networks:
+          seeds:
+          - cnn
+          - convolution
+          - convolutional
+          - filter
+          - pooling
+        graph_neural_networks:
+          seeds:
+          - gnn
+          - graph
+          - node
+          - edge
+          - adjacency
+        transformer_attention:
+          seeds:
+          - transformer
+          - attention
+          - bert
+          - self-attention
+          - encoder
+    seed_words:
+      enabled: false
+      multiplier: 2.0
+      words:
+      - explainable
+      - interpretable
+      - xai
+      - symbolic
+      - logic
+      - formal
+      - knowledge
+      - ontology
+      - decision tree
+      - rule
+      - reasoning
+      - neuro-symbolic
+      - transformer
+      - attention
+      - embedding
+      - gradient
+      - cnn
+      - convolutional
+      - rnn
+      - recurrent
+      - lstm
+      - gru
+      - gnn
+      - graph
+  embedding_model:
+    batch_size: 64
+    cache_embeddings: true
+    device: auto
+    name: all-MiniLM-L6-v2
+    show_progress: true
+  hdbscan_params:
+    cluster_selection_epsilon: 0.1
+    cluster_selection_method: eom
+    max_cluster_size: 128
+    metric: euclidean
+    min_cluster_size: 16
+    min_samples: 5
+    prediction_data: true
+  outlier_reduction:
+    enabled: true
+    save_intermediate_results: true
+    strategies:
+    - distributions_params: null
+      strategy: c-tf-idf
+      threshold: 0.1
+    - distributions_params: null
+      strategy: embeddings
+      threshold: 0.7
+    - distributions_params:
+        min_similarity: 0.05
+        stride: 1
+        window: 4
+      strategy: distributions
+      threshold: 0.05
+    update_representations: false
+  text_fields:
+  - title
+  - abstract
+  umap_params:
+    metric: cosine
+    min_dist: 0.0
+    n_components: 256
+    n_neighbors: 15
+  vectorizer_params:
+    max_df: 0.95
+    max_features: 5000
+    min_df: 2
+    ngram_range: !!python/tuple
+    - 1
+    - 2
+    stop_words: english
+stage_2:
+  augmentation:
+    enabled: true
+    min_similarity_threshold: 0.3
+    r1_bib_file: data/r1.bib
+    run_medoid_analysis: true
+  metrics:
+    compute:
+    - similarity_to_centroid
+    - similarity_to_cluster_papers
+    - diversity_score
+    - representativeness_score
+    diversity_weight: 0.55
+    min_diversity_threshold: 0.26
+    selection_iterations: 20
+    similarity_threshold: 0.8
+    use_iterative_selection: true
+  research_alignment:
+    subsymbolic:
+    - sub*symbolic
+    - deep*learning
+    - neural*
+    - network*
+    - layer*
+    - tensor*
+    - differentiab*
+    - neuro*symbolic
+    - deep reinforcement learning
+    symbolic:
+    - symbol*
+    - logic*
+    - formal*
+    - knowledge*
+    - ontolog*
+    - decision tree*
+    - decision list*
+    - decision set*
+    - constraint*
+    - rule
+    - rules
+    - reasoning
+    xai:
+    - explainab*
+    - interpretab*
+    - accountab*
+    - explicab*
+    - transparen*
+    - translucen*
+    - XAI
+    - IML
+  selection_strategy:
+    count_method: ratio_based
+    max_papers_per_cluster: 200
+    method: diverse_representative
+    ratio_params:
+      min_papers_per_cluster: 2
+      target_selection_ratio: 0.15
+    threshold_params:
+      base_papers_per_cluster: 4
+      cluster_thresholds:
+        large: 80
+        medium: 40
+        small: 20
+        xlarge: 150
+        xxlarge: 300
+stage_3:
+  output:
+    include_in_report: true
+    save_statistical_results: true
+  statistical_analysis:
+    enabled: true
+    multiple_testing_correction:
+      alpha: 0.05
+      method: fdr_bh
+    primary_metrics:
+    - similarity_to_centroid
+    - diversity_score
+    - representativeness_score
+    research_alignment:
+    - xai_alignment
+    - symbolic_alignment
+    - subsymbolic_alignment
+    tests:
+      cohens_d:
+        confidence_level: 0.95
+        effect_size_thresholds:
+          large: 0.8
+          medium: 0.5
+          small: 0.2
+        enabled: true
+      mann_whitney_u:
+        alpha: 0.05
+        alternative: two-sided
+        enabled: true
+      temporal_analysis:
+        alpha: 0.05
+        enabled: true
+        test: kolmogorov_smirnov
+  visualizations:
+    create_effect_size_plots: true
+    create_statistical_plots: true
+    create_temporal_plots: true
+    plot_dpi: 300
+    plot_format: png
